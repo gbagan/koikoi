@@ -9,7 +9,7 @@ pub mod game_tensor;
 pub mod model;
 
 use game::GameState;
-use game_tensor::feature_tensor;
+use game_tensor::{action_mask, feature_tensor};
 use model::PickModel;
 
 type B = Candle<f32, i64>;
@@ -35,11 +35,25 @@ impl AppState {
 #[tauri::command]
 async fn test(state: tauri::State<'_, Mutex<AppState>>, game_state: GameState) -> Result<(), ()> {
     let state = state.lock().unwrap();
-    let tensor = feature_tensor(&game_state, &state.device);
-    println!("{:?}", tensor.dims());
-    state.pick_model.forward(tensor);
+    let features = feature_tensor(&game_state, &state.device);
+    //let output = state.pick_model.forward(tensor);
+    //let mov = output.argmax(1).into_scalar();
+    let mask = action_mask(&game_state.round_state);
+    let mask = Tensor::<B,1>::from_data(mask.as_slice(), &state.device);
+    predict(&state.pick_model, features, mask, &state.device);
+    //println!("{}", mask);
+    //println!("{mov}");
     Ok(())
 }
+
+fn predict<B: Backend>(pick_model: &PickModel<B>, features: Tensor<B, 3>, mask: Tensor<B, 1>, device: &Device<B>) {
+    let output = pick_model.forward(features).squeeze(0);
+    let output = (output / 10).exp() * mask;
+    println!("{output}");
+    println!("{}", output.argmax(0));
+    //let action_output = self.action_dict[state][output.argmax()];
+}
+
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

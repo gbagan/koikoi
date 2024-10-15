@@ -56,7 +56,7 @@ export function initRoundState(dealer: 0 | 1 | null): RoundState
     show: []
     collect: []
     turn_16: 1
-    dealer: dealer !== null ? dealer : (Math.random() * 2 | 0) as any
+    dealer: 1 // todo  dealer !== null ? dealer : (Math.random() * 2 | 0) as any
     koikoi: [[0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0]]
     winner: null
     exhausted: false
@@ -74,21 +74,23 @@ function field(state: RoundState): Card[]
     |> sortCards
 
 function dealCards(state: RoundState)
-  console.log("ouaf")
   loop
     cards: Card[] .= []
     for i .= 1; i < 13; i++
       for j .= 1; j < 5; j++
         cards.push [i, j]
-    cards = shuffle(cards) //   todo
-    console.log(cards)
+    //cards = shuffle(cards) //   todo
+    [c, ...cards2] := cards
+    cards = cards2
+    cards.push(c)
     hand1 := cards[0...8]
     //hand1.sort_unstable()
     hand2 := cards[8...16]
     //hand2.sort_unstable();
     state.hand = [hand1, hand2]
     state.field_slot = cards[16...24] ++ replicate(10, [0, 0])
-    state.stock = cards[24..]     
+    state.stock = cards[24..]
+    break   // todo    
     flag .= false
     for suit .= 1; suit < 13; suit++
       flag = flag || countIf(hand1, (c) => c[0] === suit) === 4
@@ -98,6 +100,7 @@ function dealCards(state: RoundState)
       break
   state.state = "Discard"
   state.wait_action = true
+  state.init_board = [...field(state)]
 
 function writeCardLog(state: RoundState, s: State)
   //turn := state.turn_16

@@ -3,6 +3,8 @@ use std::{array::from_fn, collections::HashSet};
 use ndarray::prelude::*;
 use burn::prelude::*;
 use crate::game::{Card, CARD_LIST, State, RoundState, GameState};
+//use ndarray_npy::read_npy;
+
 
 fn card_to_multi_hot(card_list: &[Card]) -> [f32; 48] {
     let mut card_multi_hot = [0f32; 48];
@@ -136,10 +138,9 @@ fn init_position_array(state: &RoundState) -> Array2<f32> {
     let turn_player = state.turn_player();
     let cards_in_my_hand = card_to_multi_hot(&state.hand[turn_player]);
     let cards_in_board = card_to_multi_hot(&state.init_board);
-    //let cards_in_board = card_to_multi_hot(self.log['basic']['initBoard'])
     let unseen_cards = card_to_multi_hot(&state.unseen_cards(turn_player));
     // todo
-    ndarray::stack!(Axis(0), cards_in_my_hand, unseen_cards)
+    ndarray::stack!(Axis(0), cards_in_my_hand, cards_in_board, unseen_cards)
 }
 
 fn current_position_array(state: &RoundState) -> Array2<f32> {
@@ -200,9 +201,32 @@ pub fn feature_tensor<B: Backend>(state: &GameState, device: &Device<B>) -> Tens
         log_array(&state.round_state)
     ];
     let (dimx, dimy) = f.dim();
+    
+    /*
+    println!("verifying");
+    let f2: Array2<f64> = read_npy("tensors/test.npy").unwrap();
+    for i in 0..300 {
+        for j in 0..48 {
+            if (f[(i, j)] as f32 - f2[(i, j)] as f32).abs() >= 0.00001 {
+                println!("{i} {j} {} {}", f[(i, j)], f2[(i, j)]);
+            }
+        }
+    }
+    */
+
     let flat_arr: Vec<f32> = f
         .outer_iter().flat_map(|row| row.to_vec())
         .collect();
+
     Tensor::<B,1>::from_data(flat_arr.as_slice(), &device)
         .reshape([1, dimx, dimy])
+}
+
+pub fn action_mask(state: &RoundState) -> Vec<f32> {
+    match state.state {
+        State::Discard => card_to_multi_hot(&state.hand[state.turn_player()]).to_vec(),
+        State::DiscardPick | State::DrawPick => card_to_multi_hot(&state.pairing_cards()).to_vec(),
+        State::KoiKoi => vec!(1.0, 1.0),
+        _ => vec!()
+    }
 }

@@ -43,6 +43,7 @@ lazy_static! {
     pub static ref CARD_LIST: Vec<Vec<Card>> = vec![
         CRANE.to_vec(),
         CURTAIN.to_vec(),
+        MOON.to_vec(),
         RAIN_MAN.to_vec(),
         PHOENIX.to_vec(),
         SAKE.to_vec(),
@@ -141,7 +142,7 @@ impl RoundState {
     }
 
     pub fn turn_player(&self) -> usize {
-        if (self.turn_16+self.dealer)%2==0 {0} else {1}
+        if (self.turn_16+self.dealer)%2==1 {0} else {1}
     }
 
     fn turn_8(&self) -> usize {
@@ -217,6 +218,7 @@ impl RoundState {
         point
     }
 
+    /* 
     fn _deal_card(&mut self) {
         loop {
             let mut cards: Vec<Card> = vec!();
@@ -256,6 +258,7 @@ impl RoundState {
         self.wait_action = true;
         return
     }
+    */
 
     fn _collect_card(&mut self, card: Card) {
         let pairing_card = self.pairing_cards();
