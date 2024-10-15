@@ -1,0 +1,34 @@
+[package]
+name = "koikoi"
+version = "0.1.0"
+description = "Hanafuda Koï-Koï"
+authors = ["Guillaume Bagan"]
+edition = "2021"
+
+[profile.release]
+opt-level = 3
+overflow-checks = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "koikoi_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0.0", features = [] }
+
+[dependencies]
+burn = { version = "0.14", features = ["candle"] }
+burn-import = "0.14.0"
+lazy_static = "1.5.0"
+ndarray = "0.16.1"
+serde = { version = "1", features = ["derive"] }
+serde-big-array = "0.5.1"
+serde_json = "1"
+tauri = { version = "2.0.0", features = [] }
+tauri-plugin-shell = "2.0.0"
+

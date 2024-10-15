@@ -1,0 +1,25 @@
+import { invoke } from "@tauri-apps/api/core"
+import { Component } from 'solid-js'
+import { createStore } from "solid-js/store"
+import { initGameState } from './model.civet'
+
+App: Component := =>
+  let dialog!: HTMLDialogElement
+
+  [state, setState] := createStore initGameState()
+
+  test := => invoke "test", {gameState: state}
+
+  <div class="relative w-screen min-h-screen bg-main bg-cover bg-no-repeat flex flew-row items-center justify-around portrait:flex-col">
+    <div class="absolute bg-white w-full h-full opacity-30 z-10 pointer-events-none" />
+    <div class="flex flex-col bg-board b-cover p-6 border-2 border-black rounded-xl gap-4 z-20">
+      <div class="text-4xl">Hanafuda Koï-Koï
+      <button .btn>Nouvelle partie
+      <button .btn>Annuler
+      <button .btn>Tutoriel
+      <button .btn>Règles
+      <button .btn>Crédits
+    <button .btn onClick=test>Test
+  <dialog .dialog ref={dialog}>
+
+export default App

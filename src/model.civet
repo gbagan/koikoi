@@ -1,0 +1,124 @@
+import { countIf, replicate } from "./util.civet"
+import shuffle from 'lodash.shuffle'
+
+export type State = "Init" | "Discard" | "DiscardPick" | "Draw" | "DrawPick" | "KoiKoi" | "RoundOver"
+
+export type Card = [number, number]
+
+type CardLog = {arr: number[]}[][]
+
+export type RoundState =
+  hand: [Card[], Card[]]
+  pile: [Card[], Card[]]
+  field_slot: Card[]
+  stock: Card[]
+    
+  init_board: Card[]
+
+  show: Card[]
+  collect: Card[]
+    
+  turn_16: number
+  dealer: 0 | 1
+  koikoi: [number[], number[]]
+  winner: number | null,
+  exhausted: boolean
+  turn_point: number
+    
+  state: State
+  wait_action: boolean
+
+  card_log: CardLog
+
+
+export type GameState =
+  round_total: number
+  init_points: [number, number]
+  init_dealer: 0 | 1 | null
+  player_names: [string, string]
+  round_state: RoundState
+  round: number
+  points: [number, number]
+  game_over: boolean
+  winner: number | null
+
+function sortCards(cards: Card[]): Card[]
+  cards.sort (c1, c2) => c1[0] * 5 + c1[1] - c2[0] * 5 + c2[1]
+  cards
+
+export function initRoundState(dealer: 0 | 1 | null): RoundState
+  state: RoundState :=
+    hand: [[], []]
+    pile: [[], []]
+    stock: []
+    init_board: []
+    field_slot: []
+    show: []
+    collect: []
+    turn_16: 1
+    dealer: dealer !== null ? dealer : (Math.random() * 2 | 0) as any
+    koikoi: [[0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0]]
+    winner: null
+    exhausted: false
+    turn_point: 0
+    state: "Init"
+    wait_action: false
+    card_log: []
+  dealCards state
+  writeCardLog state, 'Init'
+  state
+
+function field(state: RoundState): Card[]
+  state
+    |> .field_slot.filter [c1, c2] => c1 !== 0 || c2 !== 0
+    |> sortCards
+
+function dealCards(state: RoundState)
+  console.log("ouaf")
+  loop
+    cards: Card[] .= []
+    for i .= 1; i < 13; i++
+      for j .= 1; j < 5; j++
+        cards.push [i, j]
+    cards = shuffle(cards) //   todo
+    console.log(cards)
+    hand1 := cards[0...8]
+    //hand1.sort_unstable()
+    hand2 := cards[8...16]
+    //hand2.sort_unstable();
+    state.hand = [hand1, hand2]
+    state.field_slot = cards[16...24] ++ replicate(10, [0, 0])
+    state.stock = cards[24..]     
+    flag .= false
+    for suit .= 1; suit < 13; suit++
+      flag = flag || countIf(hand1, (c) => c[0] === suit) === 4
+        || countIf(hand2, (c) => c[0] === suit) === 4
+        || countIf(field(state), (c) => c[0] === suit) === 4
+    if !flag
+      break
+  state.state = "Discard"
+  state.wait_action = true
+
+function writeCardLog(state: RoundState, s: State)
+  //turn := state.turn_16
+  state.card_log = [0...16].map () => [0...8].map () => {arr: replicate(48, 0)} 
+
+
+export function initGameState(
+  round_num=1,
+  round_total=8,
+  init_points: [number, number]=[30, 30],
+  init_dealer=null,
+  player_names: [string, string]=['Player1','Player2']
+): GameState
+  state: GameState := 
+    round_total: round_total
+    init_points: [init_points[0], init_points[1]]
+    init_dealer: init_dealer        
+    player_names: player_names
+    round_state: initRoundState(init_dealer)
+    round: round_num
+    points: init_points
+    game_over: false
+    winner: null
+  state
