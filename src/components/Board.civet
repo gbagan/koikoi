@@ -1,0 +1,53 @@
+import { Component } from "solid-js"
+import { Key } from "@solid-primitives/keyed"
+import { Card } from "../model.civet"
+
+type BoardComponent = Component<{
+  hand1: Card[]
+  hand2: Card[]
+  field: Card[]
+}>
+
+type CardType = 'hand1' | 'hand2' | 'field'
+
+type CardInfo = 
+  card: Card
+  id: number
+  type: CardType
+  idx: number
+
+function cardInfo (card: Card, type: CardType, idx: number): CardInfo
+  {card, id: card[0]*5 + card[1], type, idx}
+
+cardTransform := (card: CardInfo) =>
+  switch card.type
+    when 'hand1'
+      `translate(${5 + card.idx * 5}rem, 38rem)`
+    when 'hand2'
+      `translate(${5 + card.idx * 5}rem, 7rem)`
+    when "field"
+      `translate(${5 + card.idx * 5}rem, 20rem)`
+
+Board: BoardComponent := (props) =>
+  allCards := =>
+    hand1 := props.hand1.map (card, i) => cardInfo(card, 'hand1', i) as CardInfo
+    hand2 := props.hand2.map (card, i) => cardInfo(card, 'hand2', i) as CardInfo
+    field := props.field
+      |> .map (card, i) => cardInfo(card, 'field', i) as CardInfo
+      |> .filter (card) => card.card[0] + card.card[1] !== 0
+    console.log "field", field
+    hand1 ++ hand2 ++ field
+  
+  <div class="z-20 h-[50vw] w-[50vw] bg-board bg-opacity-90 relative">
+    <Key each={allCards()} by={(c) => c.id}>
+      {(card) =>
+        <div
+          class="absolute h-[6.5rem] w-16 top-0 left-0"
+          style={
+            "background-image": `url("../cards/${card().card[0]}-${card().card[1]}.svg`
+            "transform": cardTransform(card())
+          }
+        />
+      }
+
+export default Board

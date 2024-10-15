@@ -7,9 +7,11 @@ export default {
       height: {
         '30': '7.5rem',
       },
+      backgroundColor: {
+        board: '#2d4a32',
+      },
       backgroundImage: {
         main: "url('../background.webp')",
-        board: "url('../board4.webp')",
         thinking: "url('../girl_thinking.webp')",
         happy: "url('../girl_happy.webp')",
         crying: "url('../girl_crying.webp')",

@@ -12,6 +12,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@solid-primitives/keyed": "^1.2.2",
     "@tauri-apps/api": "^2.0.2",
     "@tauri-apps/plugin-shell": ">=2.0.0",
     "lodash.shuffle": "^4.2.0",

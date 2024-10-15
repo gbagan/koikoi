@@ -16,7 +16,6 @@ fn layer_norm<B: Backend, const D: usize>(x: Tensor<B, D>, dim: usize, eps: f32)
 struct EncoderBlock<B: Backend> {
     f1: Conv1d<B>,
     f2: Conv1d<B>,
-    //layernorm: LayerNorm<B>,
     attn_encoder: TransformerEncoder<B>,
 }
 
@@ -25,9 +24,11 @@ impl<B: Backend> EncoderBlock<B> {
         let x = self.f1.forward(x);
         let x = Relu.forward(x);
         let x = self.f2.forward(x);
-        let x = layer_norm(x, 2, 0.0001);
+        let x = layer_norm(x, 2,1e-5);
+        // println!("after layer norm: {}", x);
         let x = x.permute([2, 0, 1]);
         let x = self.attn_encoder.forward(TransformerEncoderInput::new(x));
+        println!("after transformer encoder: {}", x);
         x.permute([1, 2, 0])
     }
 }
@@ -46,7 +47,6 @@ impl EncoderBlockConfig {
         EncoderBlock {
             f1: Conv1dConfig::new(self.n_input, self.n_fw, 1).init(device),
             f2: Conv1dConfig::new(self.n_fw, self.n_emb, 1).init(device),
-            //layernorm: LayerNormConfig::new(2).init(device), // todo
             attn_encoder: TransformerEncoderConfig::new(
                 self.n_emb,
                 self.n_fw,

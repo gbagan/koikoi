@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core"
 import { Component } from 'solid-js'
 import { createStore } from "solid-js/store"
 import { initGameState } from './model.civet'
+import Board from './components/Board.civet'
 
 App: Component := =>
   let dialog!: HTMLDialogElement
@@ -13,12 +14,17 @@ App: Component := =>
   <div class="relative w-screen min-h-screen bg-main bg-cover bg-no-repeat flex flew-row items-center justify-around portrait:flex-col">
     <div class="absolute bg-white w-full h-full opacity-30 z-10 pointer-events-none" />
     <div class="flex flex-col bg-board b-cover p-6 border-2 border-black rounded-xl gap-4 z-20">
-      <div class="text-4xl">Hanafuda Koï-Koï
+      <div class="text-4xl">Koï-Koï
       <button .btn>Nouvelle partie
       <button .btn>Annuler
       <button .btn>Tutoriel
       <button .btn>Règles
       <button .btn>Crédits
+    <Board
+      hand1={state.round_state.hand[0]}
+      hand2={state.round_state.hand[1]}
+      field={state.round_state.field_slot}
+    />
     <button .btn onClick=test>Test
   <dialog .dialog ref={dialog}>
 
