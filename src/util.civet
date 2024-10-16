@@ -22,6 +22,14 @@ export function partition<A>(xs: A[], f: (x: A) => boolean): [A[], A[]]
     if f x then yes.push x else no.push x
   [yes, no]
 
+export sum := (xs: number[]) =>
+  total .= 0
+  n := xs.length
+  for i .= 0; i < n; i++
+    x := xs[i]
+    total += x
+  total
+
 export function sample<A>(arr: A[]): A | null
   arr[Math.random() * arr.length | 0] ?? null
 

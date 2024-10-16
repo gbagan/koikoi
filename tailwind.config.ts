@@ -4,6 +4,10 @@ export default {
   content: ["./src/**/*.{ts,tsx,civet}"],
   theme: {
     extend: {
+      colors: {
+        'bordeaux': '#9a2910'
+      },
+
       height: {
         '30': '7.5rem',
       },
@@ -22,7 +26,7 @@ export default {
         '20/80': '20% 80%',
       },
       boxShadow: {
-        'threat': '0 0 20px red',
+        picked: '0 0 20px rgba(0, 255, 255, 0.8), 0 0 30px rgba(0, 255, 255, 0.6), 0 0 40px rgba(0, 255, 255, 0.4)'
       },
       animation: {
         'flip-y': 'flip-y 500ms linear forwards',

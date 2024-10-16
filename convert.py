@@ -2,7 +2,7 @@ import torch
 from safetensors import safe_open
 
 tensors = {}
-with safe_open("src-tauri/tensors/pick_sl.safetensors", framework="pt", device="cpu") as f:
+with safe_open("src-tauri/tensors/discard_sl.safetensors", framework="pt", device="cpu") as f:
     for k in f.keys():
         k2 = k
         k2=k.replace('norm1', 'norm_1')
@@ -16,8 +16,6 @@ with safe_open("src-tauri/tensors/pick_sl.safetensors", framework="pt", device="
     in_bias = tensors["encoder_block.attn_encoder.layers.0.mha.in_proj_bias"]
     out_weight = tensors["encoder_block.attn_encoder.layers.0.mha.out_proj.weight"]
     out_bias = tensors["encoder_block.attn_encoder.layers.0.mha.out_proj.bias"]
-    print("in_weight: ", in_weight.shape)
-    print("out_weight: ", out_weight.shape)
     w_Q, w_K, w_V = in_weight.chunk(3, dim=0)
     b_Q, b_K, b_V = in_bias.chunk(3, dim=0)
     tensors["encoder_block.attn_encoder.layers.0.mha.query.weight"] = w_Q
@@ -52,4 +50,4 @@ with safe_open("src-tauri/tensors/pick_sl.safetensors", framework="pt", device="
     del tensors["encoder_block.attn_encoder.layers.1.mha.out_proj.weight"]
     del tensors["encoder_block.attn_encoder.layers.1.mha.out_proj.bias"]
 
-torch.save(tensors, "pick_sl.pt")
+torch.save(tensors, "discard_sl.pt")

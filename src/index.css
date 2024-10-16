@@ -7,6 +7,18 @@
 }
 
 @layer components {
+  .perspective-1000 {
+    perspective: 1000px
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden
+  }
+
   .btn {
     @apply
       px-4 py-2 text-sm font-medium text-white bg-transparent border border-gray-800

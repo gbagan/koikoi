@@ -10,25 +10,25 @@ pub mod model;
 
 use game::GameState;
 use game_tensor::{action_mask, feature_tensor};
-use model::PickModel;
+use model::DiscardModel;
 
 type B = Candle<f32, i64>;
 
 struct AppState {
     device: Device<B>,
-    pick_model: PickModel<B>,
+    discard_model: DiscardModel<B>,
 }
 
 
 impl AppState {
     fn new() -> Self {
         let device = CandleDevice::default();
-        let load_args = LoadArgs::new("./tensors/pick_sl.pt".into()); //.with_debug_print();
+        let load_args = LoadArgs::new("./tensors/discard_sl.pt".into()); //.with_debug_print();
         let record = PyTorchFileRecorder::<FullPrecisionSettings>::new()
             .load(load_args, &device)
             .expect("Should decode state successfully");
-        let pick_model: PickModel<B> = PickModel::new(&device).load_record(record);
-        Self {device, pick_model}
+        let discard_model: DiscardModel<B> = DiscardModel::new(&device).load_record(record);
+        Self {device, discard_model}
     }
 }
 
@@ -40,13 +40,13 @@ async fn test(state: tauri::State<'_, Mutex<AppState>>, game_state: GameState) -
     //let mov = output.argmax(1).into_scalar();
     let mask = action_mask(&game_state.round_state);
     let mask = Tensor::<B,1>::from_data(mask.as_slice(), &state.device);
-    predict(&state.pick_model, features, mask, &state.device);
+    predict(&state.discard_model, features, mask, &state.device);
     //println!("{}", mask);
     //println!("{mov}");
     Ok(())
 }
 
-fn predict<B: Backend>(pick_model: &PickModel<B>, features: Tensor<B, 3>, mask: Tensor<B, 1>, device: &Device<B>) {
+fn predict<B: Backend>(pick_model: &DiscardModel<B>, features: Tensor<B, 3>, mask: Tensor<B, 1>, device: &Device<B>) {
     let output = pick_model.forward(features).squeeze(0);
     let output = (output / 10).exp() * mask;
     println!("{output}");

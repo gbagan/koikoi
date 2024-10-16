@@ -1,14 +1,18 @@
-import { Component } from "solid-js"
-import { Key } from "@solid-primitives/keyed"
-import { Card } from "../model.civet"
+import { Component, createMemo, createSignal, Index } from "solid-js"
+import { Card, cardEq } from "../model.civet"
 
 type BoardComponent = Component<{
   hand1: Card[]
   hand2: Card[]
   field: Card[]
+  draw: Card[]
+  show: Card | null
+  pile1: Card[]
+  pile2: Card[]
+  pickCard: (card: Card) =>
 }>
 
-type CardType = 'hand1' | 'hand2' | 'field'
+type CardType = 'hand1' | 'hand2' | 'field' | 'draw' | 'pile1' | 'pile2'
 
 type CardInfo = 
   card: Card
@@ -17,37 +21,102 @@ type CardInfo =
   idx: number
 
 function cardInfo (card: Card, type: CardType, idx: number): CardInfo
-  {card, id: card[0]*5 + card[1], type, idx}
+  {card, id: card[0]*4 + card[1]-1, type, idx}
 
-cardTransform := (card: CardInfo) =>
-  switch card.type
+cardTransform := (card: CardInfo, show: boolean) =>
+  translate := switch card.type
     when 'hand1'
-      `translate(${5 + card.idx * 5}rem, 38rem)`
+      `translate(${10 + card.idx * 5}rem, 40rem)`
     when 'hand2'
-      `translate(${5 + card.idx * 5}rem, 7rem)`
+      `translate(${10 + card.idx * 5}rem, 10rem)`
     when "field"
-      `translate(${5 + card.idx * 5}rem, 20rem)`
+      `translate(${10 + (card.idx % 8) * 5}rem, ${card.idx < 8 ? 21 : 29}rem)`
+    when "draw"
+      "translate(3rem, 25rem)"
+    when "pile1"
+     `translate(${10 + card.idx * 3}rem, 46rem)`
+    when "pile2"
+     `translate(${10 + card.idx * 3}rem, 4rem)`
+
+  rotate := if (card.type === 'draw' || card.type === 'hand2') && !show then "rotateY(180deg)" else "rotateY(0)"
+  scale := if card.type === 'pile1' || card.type == 'pile2' then "scale(0.5)" else "scale(1)"
+  `${translate} ${rotate} ${scale}`   
 
 Board: BoardComponent := (props) =>
-  allCards := =>
+  [selected, setSelected] := createSignal<null | number>(null)
+
+  isGray := (card: CardInfo) =>
+    switch card.type
+      when 'field'
+        //if props.show &&  todo
+        if props.show
+          return card.card[0] !== props.show[0]
+
+        if selected() === null
+          return false 
+        selectedCard := allCards()[selected()!]
+        selectedCard.type === 'hand1' && selectedCard.card[0] !== card.card[0]
+      else
+        false
+
+  cardZIndex := (card: CardInfo) =>
+    switch card.type
+      'draw'
+        if props.show && card.card[0] == props.show[0] && card.card[0] == props.show[0] then 35 else 30
+      'hand1' 40 + card.idx
+      'hand2' 40 + card.idx
+      'field' 50 + card.idx
+      else 70
+
+
+  allCards := createMemo =>
     hand1 := props.hand1.map (card, i) => cardInfo(card, 'hand1', i) as CardInfo
     hand2 := props.hand2.map (card, i) => cardInfo(card, 'hand2', i) as CardInfo
     field := props.field
       |> .map (card, i) => cardInfo(card, 'field', i) as CardInfo
       |> .filter (card) => card.card[0] + card.card[1] !== 0
-    console.log "field", field
-    hand1 ++ hand2 ++ field
+    draw := props.draw.map (card) => cardInfo(card, 'draw', 0) as CardInfo
+    pile1 := props.pile1.map (card, i) => cardInfo(card, 'pile1', i) as CardInfo
+    pile2 := props.pile2.map (card, i) => cardInfo(card, 'pile2', i) as CardInfo
+    //show := props.show.map (card, i) => cardInfo(card, 'show', i) as CardInfo
+    cards := hand1 ++ hand2 ++ field ++ draw ++ pile1 ++ pile2
+    cards.sort((c1, c2) => c1.id - c2.id)
+    cards
   
   <div class="z-20 h-[50vw] w-[50vw] bg-board bg-opacity-90 relative">
-    <Key each={allCards()} by={(c) => c.id}>
-      {(card) =>
-        <div
-          class="absolute h-[6.5rem] w-16 top-0 left-0"
+    <Index each={allCards()}>
+      {(card, i) =>
+        <div 
+          class="absolute perspective-1000"
           style={
-            "background-image": `url("../cards/${card().card[0]}-${card().card[1]}.svg`
-            "transform": cardTransform(card())
+            width: card().type === 'hand1' && selected() === i ? '5rem' :  '4rem'
+            height:  card().type === 'hand1' && selected() === i ? '8rem' : '6.5rem'
+            'z-index': cardZIndex card()
           }
-        />
+        >
+          <div
+            class="relative w-full h-full transition-transform duration-1000 preserve-3d"
+            classList={"shadow-picked": card().type === 'hand1' && props.show !== null && cardEq(card().card, props.show)}
+            style={
+              transform: cardTransform(card(), props.show !== null && cardEq(card().card, props.show))
+              top: "-50%"
+              left: "-50%"
+              filter: isGray(card()) ? "grayscale(100%)" : ""
+            }
+            onClick=[props.pickCard, card().card]
+            onPointerEnter={[setSelected, i]}
+            onPointerLeave={[setSelected, null]}
+        >
+            <div
+              class="absolute w-full h-full backface-hidden"
+              style={
+                "background-image": `url("../cards/${card().card[0]}-${card().card[1]}.svg`
+              }
+            />
+            <div
+              class="absolute w-full h-full backface-hidden bg-bordeaux border-4 border-bordeaux"
+              style={transform: "rotateY(180deg)"}  
+            />
       }
 
 export default Board
