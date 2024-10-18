@@ -3,7 +3,7 @@ use std::{array::from_fn, collections::HashSet};
 use ndarray::prelude::*;
 use burn::prelude::*;
 use crate::game::{Card, CARD_LIST, State, RoundState, GameState};
-//use ndarray_npy::read_npy;
+use ndarray_npy::read_npy;
 
 
 fn card_to_multi_hot(card_list: &[Card]) -> [f32; 48] {
@@ -201,8 +201,7 @@ pub fn feature_tensor<B: Backend>(state: &GameState, device: &Device<B>) -> Tens
         log_array(&state.round_state)
     ];
     let (dimx, dimy) = f.dim();
-    
-    /*
+
     println!("verifying");
     let f2: Array2<f64> = read_npy("tensors/test.npy").unwrap();
     for i in 0..300 {
@@ -212,7 +211,6 @@ pub fn feature_tensor<B: Backend>(state: &GameState, device: &Device<B>) -> Tens
             }
         }
     }
-    */
 
     let flat_arr: Vec<f32> = f
         .outer_iter().flat_map(|row| row.to_vec())

@@ -1,7 +1,8 @@
 import { Component, createMemo, createSignal, Index } from "solid-js"
-import { Card, cardEq } from "../model.civet"
+import { Card, cardEq, State } from "../model.civet"
 
 type BoardComponent = Component<{
+  phase: State
   hand1: Card[]
   hand2: Card[]
   field: Card[]
@@ -9,10 +10,11 @@ type BoardComponent = Component<{
   show: Card | null
   pile1: Card[]
   pile2: Card[]
+  oyaCards: Card[]
   pickCard: (card: Card) =>
 }>
 
-type CardType = 'hand1' | 'hand2' | 'field' | 'draw' | 'pile1' | 'pile2'
+type CardType = 'hand1' | 'hand2' | 'field' | 'draw' | 'pile1' | 'pile2' | 'oya'
 
 type CardInfo = 
   card: Card
@@ -23,7 +25,7 @@ type CardInfo =
 function cardInfo (card: Card, type: CardType, idx: number): CardInfo
   {card, id: card[0]*4 + card[1]-1, type, idx}
 
-cardTransform := (card: CardInfo, show: boolean) =>
+cardTransform := (card: CardInfo, phase: State, show: boolean) =>
   translate := switch card.type
     when 'hand1'
       `translate(${10 + card.idx * 5}rem, 40rem)`
@@ -34,12 +36,19 @@ cardTransform := (card: CardInfo, show: boolean) =>
     when "draw"
       "translate(3rem, 25rem)"
     when "pile1"
-     `translate(${10 + card.idx * 3}rem, 46rem)`
+      `translate(${10 + card.idx * 3}rem, 46rem)`
     when "pile2"
-     `translate(${10 + card.idx * 3}rem, 4rem)`
+      `translate(${10 + card.idx * 3}rem, 4rem)`
+    when "oya"
+      `translate(${15 + 20 * card.idx}rem, 25rem)`     
 
-  rotate := if (card.type === 'draw' || card.type === 'hand2') && !show then "rotateY(180deg)" else "rotateY(0)"
-  scale := if card.type === 'pile1' || card.type == 'pile2' then "scale(0.5)" else "scale(1)"
+  rotate := if phase === 'Oya2' || (card.type === 'draw' || card.type === 'hand2') && !show then "rotateY(180deg)" else "rotateY(0)"
+  scale :=
+    if card.type === 'pile1' || card.type == 'pile2'
+    then "scale(0.166)"
+    else if card.type === 'oya'
+    then "scale(1)"
+    else "scale(0.33)"
   `${translate} ${rotate} ${scale}`   
 
 Board: BoardComponent := (props) =>
@@ -62,7 +71,7 @@ Board: BoardComponent := (props) =>
   cardZIndex := (card: CardInfo) =>
     switch card.type
       'draw'
-        if props.show && card.card[0] == props.show[0] && card.card[0] == props.show[0] then 35 else 30
+        if props.show && cardEq(card.card, props.show) then 35 else 30
       'hand1' 40 + card.idx
       'hand2' 40 + card.idx
       'field' 50 + card.idx
@@ -78,8 +87,9 @@ Board: BoardComponent := (props) =>
     draw := props.draw.map (card) => cardInfo(card, 'draw', 0) as CardInfo
     pile1 := props.pile1.map (card, i) => cardInfo(card, 'pile1', i) as CardInfo
     pile2 := props.pile2.map (card, i) => cardInfo(card, 'pile2', i) as CardInfo
+    oyaCards := props.oyaCards.map (card, i) => cardInfo(card, 'oya', i) as CardInfo
     //show := props.show.map (card, i) => cardInfo(card, 'show', i) as CardInfo
-    cards := hand1 ++ hand2 ++ field ++ draw ++ pile1 ++ pile2
+    cards := hand1 ++ hand2 ++ field ++ draw ++ pile1 ++ pile2 ++ oyaCards
     cards.sort((c1, c2) => c1.id - c2.id)
     cards
   
@@ -89,8 +99,8 @@ Board: BoardComponent := (props) =>
         <div 
           class="absolute perspective-1000"
           style={
-            width: card().type === 'hand1' && selected() === i ? '5rem' :  '4rem'
-            height:  card().type === 'hand1' && selected() === i ? '8rem' : '6.5rem'
+            width: card().type === 'hand1' && selected() === i ? '15rem' :  '12rem'
+            height:  card().type === 'hand1' && selected() === i ? '24rem' : '19.5rem'
             'z-index': cardZIndex card()
           }
         >
@@ -98,7 +108,7 @@ Board: BoardComponent := (props) =>
             class="relative w-full h-full transition-transform duration-1000 preserve-3d"
             classList={"shadow-picked": card().type === 'hand1' && props.show !== null && cardEq(card().card, props.show)}
             style={
-              transform: cardTransform(card(), props.show !== null && cardEq(card().card, props.show))
+              transform: cardTransform(card(), props.phase, props.show !== null && cardEq(card().card, props.show))
               top: "-50%"
               left: "-50%"
               filter: isGray(card()) ? "grayscale(100%)" : ""

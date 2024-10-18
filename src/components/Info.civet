@@ -1,0 +1,56 @@
+import { Component, For, createMemo } from "solid-js"
+import { Transition } from "solid-transition-group"
+import { State } from "../model.civet"
+import { Blue } from "./Emph.civet"
+
+const emph = (x: string) => ["B", x] as ["B", string]
+
+type InfoComponent = Component<{
+  state: State
+  turnPlayer: 0 | 1
+  wait_action: boolean
+}>
+
+const Info: InfoComponent = (props) =>  
+  message := createMemo =>
+    if props.state === 'Oya2'
+    then ["Choisis une carte. Si elle est d'un mois plus petit que l'autre, tu commenceras la partie."]
+    else if props.turnPlayer === 1 || !props.wait_action
+    then null
+    else if props.state === 'Discard'
+    then ["Choisis une carte de ta ", emph("main"), " pour l'associer à une carte de la ", emph("rivière"), '.']
+    else if props.state === 'DiscardPick'
+    then ["Choisis une carte de la ", emph("riviète"), " pour l'associer à la carte que tu as précédemment chosie."]
+    else if props.state === 'DrawPick'
+    then ["Choisis une carte de la ", emph("riviète"), " pour l'associer à la carte de la ", emph("pioche"), "."]    
+    else null
+
+  girlExpression := createMemo =>
+    if props.turnPlayer === 1
+    then "bg-thinking"
+    else "bg-speaking"
+
+  <div class=`z-20 relative w-[15rem] h-[25rem] bg-contain bg-no-repeat ${girlExpression()}`>
+    <Transition
+      onEnter={(el, done) =>
+        a := el.animate [{ opacity: 0 }, { opacity: 1 }], {duration: 500}
+        a.finished.then done
+      }
+      onExit={(el, done) =>
+        a := el.animate [{ opacity: 1 }, { opacity: 0 }], {duration: 500}
+        a.finished.then done
+      }
+    >
+      {message() &&
+        <div class="tooltip -right-5">
+          <For each={message()}>
+            {(m) =>
+              switch m
+                //["R", text] <Red>{text}
+                //["G", text] <Green>{text}
+                ["B", text] <Blue>{text}
+                else m as string
+            }
+      }
+
+export default Info

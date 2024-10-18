@@ -22,14 +22,14 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2.0.0", features = [] }
 
 [dependencies]
-burn = { version = "0.14", features = ["candle"] }
-burn-import = "0.14.0"
+burn = { version="0.14.0", path = "../../burn/crates/burn", features = ["candle"] }
+burn-import = { version="0.14.0", path = "../../burn/crates/burn-import" }
 lazy_static = "1.5.0"
 ndarray = "0.16.1"
+ndarray-npy = "0.9.1"
 serde = { version = "1", features = ["derive"] }
 serde-big-array = "0.5.1"
 serde_json = "1"
 tauri = { version = "2.0.0", features = [] }
 tauri-plugin-shell = "2.0.0"
-ndarray-npy = "0.9.1"
 

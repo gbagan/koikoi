@@ -540,8 +540,7 @@ impl RoundState {
 pub struct GameState {
     pub round_total: usize,
     pub init_points: [usize; 2],
-    pub init_dealer: Option<usize>,        
-    pub player_names: [String; 2],
+    pub init_dealer: Option<usize>,
     pub round_state: RoundState,
     pub round: usize,
     pub points: [usize; 2], 

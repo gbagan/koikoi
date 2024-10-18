@@ -26,10 +26,11 @@ impl<B: Backend> EncoderBlock<B> {
         let x = self.f2.forward(x);
         let x = layer_norm(x, 2,1e-5);
         println!("after layer norm: {}", x);
-        let x = x.permute([2, 0, 1]);
+        let x = x.permute([0, 2, 1]);
+        println!("after permute: {}", x);
         let x = self.attn_encoder.forward(TransformerEncoderInput::new(x));
         println!("after transformer encoder: {}", x);
-        x.permute([1, 2, 0])
+        x.permute([0, 2, 1])
     }
 }
 

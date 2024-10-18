@@ -12,6 +12,9 @@ use game::GameState;
 use game_tensor::{action_mask, feature_tensor};
 use model::DiscardModel;
 
+use ndarray_npy::read_npy;
+
+
 type B = Candle<f32, i64>;
 
 struct AppState {

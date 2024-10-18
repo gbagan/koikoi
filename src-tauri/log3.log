@@ -1,0 +1,13 @@
+
+> catch-the-lion@0.1.0 tauri
+> tauri dev
+
+
+> catch-the-lion@0.1.0 dev
+> vite
+
+
+  VITE v5.4.8  ready in 403 ms
+
+  ➜  Local:   http://localhost:1420/
+09:54:43 [vite] hmr update /src/App.civet.tsx, /src/index.css

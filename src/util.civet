@@ -30,7 +30,7 @@ export sum := (xs: number[]) =>
     total += x
   total
 
-export function sample<A>(arr: A[]): A | null
+export function randomChoice<A>(arr: A[]): A | null
   arr[Math.random() * arr.length | 0] ?? null
 
 export delay := (ms: number) => new Promise((resolve) => setTimeout resolve, ms)
