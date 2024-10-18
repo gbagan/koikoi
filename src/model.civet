@@ -7,6 +7,18 @@ export type Card = [number, number]
 
 type CardLog = {arr: number[]}[][]
 
+type CardType = 'hand1' | 'hand2' | 'field' | 'draw' | 'pile1' | 'pile2' | 'oya'
+
+export type CardInfo = 
+  card: Card
+  id: number
+  type: CardType
+  idx: number
+
+export function cardInfo (card: Card, type: CardType, idx: number): CardInfo
+  {card, id: card[0]*4 + card[1]-1, type, idx}
+
+
 export type RoundState =
   hand: [Card[], Card[]]
   pile: [Card[], Card[]]
@@ -72,6 +84,30 @@ export cardEq := (c1: Card, c2: Card) => c1[0] === c2[0] && c1[1] === c2[1]
 function sortCards(cards: Card[]): Card[]
   cards.sort (c1, c2) => c1[0] * 5 + c1[1] - c2[0] * 5 + c2[1]
   cards
+
+export cardYakus := (card: Card) =>
+  mainYaku :=
+    if LIGHT.some (c) => cardEq(c, card)
+    then ["light", 3] as [string, number]
+    else if SEED.some (c) => cardEq(c, card)
+    then ["seed", 5] as [string, number]
+    else if RIBBON.some (c) => cardEq(c, card)
+    then ["ribbon", 5] as [string, number]
+    else ["dross", 10] as [string, number]
+  output := [mainYaku]
+  if BOAR_DEER_BUTTERFLY.some (c) => cardEq(c, card) then
+    output.push ["bdb", 0]
+  if FLOWER_SAKE.some (c) => cardEq(c, card) then
+    output.push ["fsake", 0]
+  if FLOWER_SAKE.some (c) => cardEq(c, card) then
+    output.push ["msake", 0]
+  if RED_BLUE_RIBBON.some (c) => cardEq(c, card) then
+    output.push ["redblue", 0]
+  if RED_RIBBON.some (c) => cardEq(c, card) then
+    output.push ["red", 0]
+  if BLUE_RIBBON.some (c) => cardEq(c, card) then
+    output.push ["blue", 0]
+  output
 
 export function initRoundState(): RoundState
   state: RoundState :=
@@ -152,6 +188,7 @@ export function dealCards(state: RoundState)
   writeCardLog state, 'Init' // todo
 
 export function fakeDealCards(state: RoundState)
+  clearState(state)
   cards: Card[] .= []
   for i .= 1; i < 13; i++
     for j .= 1; j < 5; j++
@@ -166,6 +203,7 @@ export function fakeDealCards(state: RoundState)
   state.hand = [hand1, hand2]
   state.field_slot = cards[16...24] ++ replicate(10, [0, 0])
   state.stock = cards[24..]
+  state.dealer = 1
   state.pile = [[], []]
   state.state = "Discard"
   state.wait_action = true
@@ -433,7 +471,6 @@ export claimKoikoi := (state: RoundState, isKoikoi: boolean | null) =>
     isKoikoi = false
   state.koikoi[player][t8-1] = if isKoikoi === true then 1 else 0
   //self.__write_log(is_koikoi) todo
-  console.log "koikoi", isKoikoi
 
   if isKoikoi === false
     state.state = 'RoundOver'
@@ -452,7 +489,6 @@ export claimKoikoi := (state: RoundState, isKoikoi: boolean | null) =>
     state.wait_action = true
 
 export nextAction := (state: RoundState) =>
-  console.log state.state
   switch state.state
     "NewRound"
       dealCards(state)

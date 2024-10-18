@@ -1,8 +1,8 @@
 import { invoke } from "@tauri-apps/api/core"
-import { Component, createMemo } from 'solid-js'
+import { Component, createMemo, createSignal } from 'solid-js'
 import { createStore, produce } from "solid-js/store"
-import { Card, cardInter, clearState, initGameState, cardEq, selectOyaCard, yaku, YAKU_TEXT, YAKU_CARDS
-        dealCards, discard, discardPick, drawPick, turnPlayer, nextAction, fakeDealCards } from './model.civet'
+import { Card, CardInfo, cardInter, clearState, initGameState, cardEq, selectOyaCard, yaku, YAKU_TEXT, YAKU_CARDS
+        discard, discardPick, drawPick, turnPlayer, nextAction, fakeDealCards } from './model.civet'
 import { delay } from './util.civet'
 import { aiPlays, randomAI } from './ai.civet'
 import Board from './components/Board.civet'
@@ -15,6 +15,7 @@ App: Component := =>
   let dialog!: HTMLDialogElement
 
   [state, setState] := createStore initGameState()
+  [hoveredCard, setHoveredCard] := createSignal<CardInfo | null>(null)
 
   newYakus := createMemo =>
     rstate := state.round_state
@@ -26,23 +27,12 @@ App: Component := =>
       [idx] := diff[0]
       [YAKU_TEXT[idx], cardInter(YAKU_CARDS[idx], rstate.pile[player])] as [string, Card[]]
 
-  test3 := =>
-    setState produce (state) =>
-      roundState := state.round_state
-      card1 := roundState.hand[0][0]
-      roundState.hand[0].splice(0, 1)
-      card2 := roundState.field_slot[4]
-      roundState.field_slot[4] = [0, 0]
-      roundState.pile[0].push(card1)
-      roundState.pile[0].push(card2)
 
   test4 := async =>
     setState produce (state) =>
       clearState state.round_state
     continueGame()
 
-  restart := =>
-    setState produce (s) => dealCards s.round_state
 
   test := =>
     setState produce (state) =>
@@ -85,7 +75,6 @@ App: Component := =>
         setState produce (state) =>
           nextAction state.round_state
       else if turnPlayer(state.round_state) === 1
-        console.log 'continue', state.round_state.state
         setState produce (state) =>
           aiPlays(state.round_state, randomAI)
       else
@@ -109,12 +98,15 @@ App: Component := =>
       pile1={state.round_state.pile[0]}
       pile2={state.round_state.pile[1]}
       oyaCards={state.round_state.oyaCards}
+      hoveredCard=hoveredCard()
       pickCard=pickCard
+      setHoveredCard=setHoveredCard
     />
     <Info
       state=state.round_state.state
       turnPlayer=turnPlayer(state.round_state)
       wait_action={state.round_state.wait_action}
+      hoveredCard=hoveredCard()
     >
     {newYakus() !== null &&
       <div class="absolute z-50 top-0 left-0 w-full h-full flex items-center">

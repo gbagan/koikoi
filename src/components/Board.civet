@@ -1,5 +1,5 @@
-import { Component, createMemo, createSignal, Index } from "solid-js"
-import { Card, cardEq, State } from "../model.civet"
+import { Component, createMemo, Index } from "solid-js"
+import { Card, CardInfo, cardInfo, cardEq, State } from "../model.civet"
 
 type BoardComponent = Component<{
   phase: State
@@ -11,19 +11,10 @@ type BoardComponent = Component<{
   pile1: Card[]
   pile2: Card[]
   oyaCards: Card[]
+  hoveredCard: CardInfo | null
+  setHoveredCard: (c: CardInfo | null) =>
   pickCard: (card: Card) =>
 }>
-
-type CardType = 'hand1' | 'hand2' | 'field' | 'draw' | 'pile1' | 'pile2' | 'oya'
-
-type CardInfo = 
-  card: Card
-  id: number
-  type: CardType
-  idx: number
-
-function cardInfo (card: Card, type: CardType, idx: number): CardInfo
-  {card, id: card[0]*4 + card[1]-1, type, idx}
 
 cardTransform := (card: CardInfo, phase: State, show: boolean) =>
   translate := switch card.type
@@ -44,7 +35,7 @@ cardTransform := (card: CardInfo, phase: State, show: boolean) =>
 
   rotate := if phase === 'Oya2' || (card.type === 'draw' || card.type === 'hand2') && !show then "rotateY(180deg)" else "rotateY(0)"
   scale :=
-    if card.type === 'pile1' || card.type == 'pile2'
+    if card.type === 'pile1' || card.type === 'pile2'
     then "scale(0.166)"
     else if card.type === 'oya'
     then "scale(1)"
@@ -52,8 +43,9 @@ cardTransform := (card: CardInfo, phase: State, show: boolean) =>
   `${translate} ${rotate} ${scale}`   
 
 Board: BoardComponent := (props) =>
-  [selected, setSelected] := createSignal<null | number>(null)
-
+  isHoveredCard := (card: CardInfo) =>
+    props.hoveredCard !== null && cardEq(props.hoveredCard.card, card.card)
+  
   isGray := (card: CardInfo) =>
     switch card.type
       when 'field'
@@ -61,10 +53,9 @@ Board: BoardComponent := (props) =>
         if props.show
           return card.card[0] !== props.show[0]
 
-        if selected() === null
+        if props.hoveredCard === null
           return false 
-        selectedCard := allCards()[selected()!]
-        selectedCard.type === 'hand1' && selectedCard.card[0] !== card.card[0]
+        props.hoveredCard.type === 'hand1' && props.hoveredCard.card[0] !== card.card[0]
       else
         false
 
@@ -95,12 +86,12 @@ Board: BoardComponent := (props) =>
   
   <div class="z-20 h-[50vw] w-[50vw] bg-board bg-opacity-90 relative">
     <Index each={allCards()}>
-      {(card, i) =>
+      {(card) =>
         <div 
           class="absolute perspective-1000"
           style={
-            width: card().type === 'hand1' && selected() === i ? '15rem' :  '12rem'
-            height:  card().type === 'hand1' && selected() === i ? '24rem' : '19.5rem'
+            width: card().type === 'hand1' && isHoveredCard(card()) ? '15rem' :  '12rem'
+            height:  card().type === 'hand1' && isHoveredCard(card()) ? '24rem' : '19.5rem'
             'z-index': cardZIndex card()
           }
         >
@@ -114,8 +105,8 @@ Board: BoardComponent := (props) =>
               filter: isGray(card()) ? "grayscale(100%)" : ""
             }
             onClick=[props.pickCard, card().card]
-            onPointerEnter={[setSelected, i]}
-            onPointerLeave={[setSelected, null]}
+            onPointerEnter={[props.setHoveredCard, card()]}
+            onPointerLeave={[props.setHoveredCard, null]}
         >
             <div
               class="absolute w-full h-full backface-hidden"

@@ -1,7 +1,10 @@
 import { Component, For, createMemo } from "solid-js"
 import { Transition } from "solid-transition-group"
-import { State } from "../model.civet"
+import { State, CardInfo, cardYakus } from "../model.civet"
+import { intercalate } from "../util.civet"
 import { Blue } from "./Emph.civet"
+
+type Message = String | ["B", String]
 
 const emph = (x: string) => ["B", x] as ["B", string]
 
@@ -9,11 +12,34 @@ type InfoComponent = Component<{
   state: State
   turnPlayer: 0 | 1
   wait_action: boolean
+  hoveredCard: CardInfo | null
 }>
+
+YAKU_NAME: Record<string, string> :=
+  light: "Lumière"
+  dross: "Fleur"
+  ribbon: "Ruban"
+  seed: "Animal"
+  bdb: "Sanglier-Cerf-Papillon"
+  fsake: "Contemplation de la fleur de cerisier"
+  msake: "Contemplation de la lune"
+  redblue: "Rubans à poésie rouges et bleus"
+  red: "Rubans à poésie rouges"
+  blue: "Rubans à poésie bleus"
 
 const Info: InfoComponent = (props) =>  
   message := createMemo =>
-    if props.state === 'Oya2'
+    if props.hoveredCard !== null && ["hand1", "field"].includes(props.hoveredCard.type)
+    then
+      yakus := cardYakus(props.hoveredCard.card)
+      [yaku, amount] := yakus[0]
+      name := YAKU_NAME[yaku]
+      text: Message[] .= ["C'est une carte ", emph(name), ". Collectionne en ", emph(""+amount), " pour former un yaku."]
+      if yakus.length > 1
+        text ++ [" Tu peux également former "] ++ intercalate(yakus[1..].map(([yaku]) => emph(YAKU_NAME[yaku]) as Message), ", ")
+      else
+        text
+    else if props.state === 'Oya2'
     then ["Choisis une carte. Si elle est d'un mois plus petit que l'autre, tu commenceras la partie."]
     else if props.turnPlayer === 1 || !props.wait_action
     then null
