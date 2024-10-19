@@ -1,8 +1,8 @@
 import { sum } from './util.civet'
 
-export type Phase = "Init" | "Oya" | "Oya2" | "Oya3" | "NewRound" 
+export type Phase = "Init" | "Oya" | "Oya2" | "Oya3" | "DealCards" 
                   | "Discard" | "DiscardPick" | "Draw" | "DrawPick" | "Yakus" | "KoiKoi" 
-                  | "ShowKoiKoi" | "RoundOver"
+                  | "ShowKoiKoi" | "RoundOver" | "NewRound"
 
 type CardLog = {arr: number[]}[][]
 
@@ -17,7 +17,10 @@ export function cardInfo (card: number, type: CardType, idx: number): CardInfo
   {card, type, idx}
 
 
-export type RoundState =
+export type GameState =
+  round: number
+  points: [number, number]
+
   hand: [number[], number[]]
   pile: [number[], number[]]
   fieldSlots: (number | null)[]
@@ -41,23 +44,24 @@ export type RoundState =
   newYakus: number[]
   turn_point: number
     
-  state: Phase
+  phase: Phase
   animation: boolean
   
   wait_action: boolean
   card_log: CardLog
 
-
+/*
 export type GameState =
   round_total: number
   init_points: [number, number]
   init_dealer: 0 | 1 | null
   //player_names: [string, string]
   round_state: RoundState
-  round: number
-  points: [number, number]
+  //round: number
+  //points: [number, number]
   game_over: boolean
   //winner: 0 | 1 | null
+*/
 
 
 //CRANE = {(1,1)}
@@ -113,8 +117,10 @@ export cardYakus := (card: number) =>
     output.push ["blue", 0]
   output
 
-export function initRoundState(): RoundState
-  state: RoundState :=
+export function initGameState(): GameState
+  state: GameState :=
+    round: 1
+    points: [30, 30]
     hand: [[], []]
     pile: [[], []]
     stock: []
@@ -132,18 +138,19 @@ export function initRoundState(): RoundState
     turn_point: 0
     turnYakus: []
     newYakus: []
-    state: "Init"
+    phase: "Init"
     wait_action: false
     animation: false
     card_log: []
   //writeCardLog state, 'Init'
   state
 
-export function field(state: RoundState): number[]
+export function field(state: GameState): number[]
   state
     |> .fieldSlots.filter(& !== null)
     |> sortCards
 
+/*
 export function initGameState(
   round_num=1,
   round_total=8,
@@ -156,22 +163,23 @@ export function initGameState(
     init_dealer: 0       
     //player_names: player_names
     round_state: initRoundState()
-    round: round_num
-    points: init_points
+    //round: round_num
+    //points: init_points
     game_over: false
     //winner: null
   state
+*/
 
-export turn8 := (state: RoundState) =>
+export turn8 := (state: GameState) =>
   (state.turn_16+1) / 2 | 0
 
-export function turnPlayer(state: RoundState): 0 | 1
+export function turnPlayer(state: GameState): 0 | 1
   if (state.turn_16+state.dealer)%2==1 then 0 else 1
 
 export sameMonth := (c1: number, c2: number) =>
   (c1 / 4 | 0) === (c2 / 4 | 0)
 
-export function pairingCards(state: RoundState, card: number): number[]
+export function pairingCards(state: GameState, card: number): number[]
   field(state).filter (c) => sameMonth(c, card)
 
 export cardInter := (xs: number[], ys: number[]) =>
@@ -188,10 +196,10 @@ cardInterLen := (xs: number[], ys: number[]) =>
 cardSubset := (xs: number[], ys: number[]) =>
   xs.every (c) => ys.includes(c)
 
-koikoiNum := (state: RoundState, player: 0 | 1) =>
+koikoiNum := (state: GameState, player: 0 | 1) =>
   state.koikoi[player] |> sum
 
-export function yaku(state: RoundState, player: 0 | 1): [number, number][]
+export function yaku(state: GameState, player: 0 | 1): [number, number][]
   total: [number, number][] := []
   pile := state.pile[player]
   koikoi := koikoiNum(state, player)
@@ -281,7 +289,7 @@ export YAKU_CARDS: number[][] := [
   DROSS // 14
 ]
 
-export yakuPoints := (state: RoundState, player: 0 | 1) =>
+export yakuPoints := (state: GameState, player: 0 | 1) =>
   points := yaku(state, player)
     |> .filter(&[0] !== 15)
     |> .map(&[1])

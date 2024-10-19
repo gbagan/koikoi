@@ -45,11 +45,11 @@ const Info: InfoComponent = (props) =>
     else if props.turnPlayer === 1 || !props.wait_action
     then null
     else if props.phase === 'Discard'
-    then ["Choisis une carte de ta ", emph("main"), " pour l'associer à une carte de la ", emph("rivière"), '.']
+    then ["Choisis une carte de ta ", emph("main"), " pour l'associer à une carte de la ", emph("rivière"), ' du même mois.']
     else if props.phase === 'DiscardPick'
     then ["Choisis une carte de la ", emph("riviète"), " pour l'associer à la carte que tu as précédemment chosie."]
     else if props.phase === 'DrawPick'
-    then ["Choisis une carte de la ", emph("riviète"), " pour l'associer à la carte de la ", emph("pioche"), "."]    
+    then ["Choisis une carte de la ", emph("riviète"), " pour l'associer à la carte de la ", emph("pioche"), " du même mois."]    
     else null
 
   girlExpression := createMemo =>

@@ -149,8 +149,8 @@ Board: BoardComponent := (props) =>
             />
             <div
               class="absolute w-full h-full backface-hidden bg-backface"
-              classList={"animate-oya-card": props.phase === 'Oya2' && card() === props.hoveredCard}
-              style={transform: "rotateY(180deg)"}  
+              classList={"hover:animate-oya-card": props.phase === 'Oya2'}
+              style={transform: "rotateY(180deg)"}
             />
       }
 

@@ -4,6 +4,7 @@ import { YAKU_TEXT } from "../model.civet"
 type RoundOverComponent = Component<{
   yakus: [number, number][]
   total: number
+  newRound: =>
 }>
 
 const RoundOver: RoundOverComponent = (props) =>
@@ -25,6 +26,6 @@ const RoundOver: RoundOverComponent = (props) =>
             <td class="border font-bold">{props.total} points
 
     <div .dialog-buttons>
-      <button .btn>Nouvelle manche
+      <button .btn onClick=props.newRound>Nouvelle manche
 
 export default RoundOver

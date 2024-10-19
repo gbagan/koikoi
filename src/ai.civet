@@ -1,26 +1,26 @@
-import { RoundState, pairingCards } from './model.civet'
+import { GameState, pairingCards } from './model.civet'
 import { discard, discardPick, drawPick, claimKoikoi } from './actions.civet'
 import { randomChoice } from './util.civet' 
 
 type AI =
-  discard: (state: RoundState) => number | null
-  pick: (state: RoundState) => number | null
-  koikoi: (state: RoundState) => boolean
+  discard: (state: GameState) => number | null
+  pick: (state: GameState) => number | null
+  koikoi: (state: GameState) => boolean
 
 export randomAI: AI :=
-  discard: (state: RoundState) =>
+  discard: (state: GameState) =>
     moves := state.hand[1].filter (c) => pairingCards(state, c).length > 0
     if moves.length > 0
       randomChoice(moves)
     else
       randomChoice(state.hand[1])
-  pick: (state: RoundState) =>
+  pick: (state: GameState) =>
     pairingCards(state, state.show!) |> randomChoice
   koikoi: => false
 
 
-export aiPlays := (state: RoundState, ai: AI) =>
-  switch state.state
+export aiPlays := (state: GameState, ai: AI) =>
+  switch state.phase
     "Discard"
       discard(state, ai.discard(state)!)
     "DiscardPick"

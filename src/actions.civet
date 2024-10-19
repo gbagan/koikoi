@@ -1,11 +1,26 @@
-import { RoundState, field, Phase, sameMonth, pairingCards, turnPlayer, turn8, yaku, yakuPoints } from './model.civet'
+import { GameState, field, Phase, sameMonth, pairingCards, turnPlayer, turn8, yaku, yakuPoints } from './model.civet'
 import shuffle from 'lodash.shuffle'
 import { countIf, last, replicate } from './util.civet'
 
 function yakuDifference(ys1: [number, number][], ys2: [number, number][])
   ys1.filter (y1) => ys2.every((y2) => y1[0] !== y2[0] || y1[1] !== y2[1])
 
-export function clearState(state: RoundState)
+properlyShuffle := =>
+  loop
+    cards: number[] := shuffle [0...48]
+    hand1 := cards[0...8]
+    hand2 := cards[8...16]
+    field := cards[16...24]
+    flag .= false
+    for suit .= 1; suit < 13; suit++
+      flag = flag || countIf(hand1, (c) => (c / 4 | 0) === suit) === 4
+        || countIf(hand2, (c) => (c / 4 | 0) === suit) === 4
+        || countIf(field, (c) => (c / 4 | 0) === suit) === 4
+    if !flag
+      return cards
+
+
+export function clearState(state: GameState)
   state.hand = [[], []]
   state.pile = [[], []]
   state.stock = []
@@ -22,25 +37,13 @@ export function clearState(state: RoundState)
   state.turnYakus = []
   state.newYakus = []
   state.turn_point = 0
-  state.state = "Oya"
+  state.phase = "Oya"
   state.wait_action = false
   state.card_log = []
-  loop
-    cards: number[] := shuffle [0...48]
-    hand1 := cards[0...8]
-    hand2 := cards[8...16]
-    field := cards[16...24]
-    flag .= false
-    for suit .= 1; suit < 13; suit++
-      flag = flag || countIf(hand1, (c) => (c / 4 | 0) === suit) === 4
-        || countIf(hand2, (c) => (c / 4 | 0) === suit) === 4
-        || countIf(field, (c) => (c / 4 | 0) === suit) === 4
-    if !flag
-      state.stock = cards
-      break
+  state.stock = shuffle [0...48]
   return
 
-export function dealCards(state: RoundState)
+export function dealCards(state: GameState)
   hand1 := state.stock[0...8]
     //hand1.sort_unstable()
   hand2 := state.stock[8...16]
@@ -48,12 +51,12 @@ export function dealCards(state: RoundState)
   state.hand = [hand1, hand2]
   state.fieldSlots = state.stock[16...24] ++ replicate(8, null) as any
   state.stock = state.stock[24..]
-  state.state = "Discard"
+  state.phase = "Discard"
   state.wait_action = true
   state.init_board = [...field(state)]
   writeCardLog state, 'Init' // todo
 
-export function fakeDealCards(state: RoundState)
+export function fakeDealCards(state: GameState)
   clearState(state)
   cards: number[] .= [0...48]
   [c, ...cards2] := cards
@@ -68,17 +71,17 @@ export function fakeDealCards(state: RoundState)
   state.stock = cards[24..]
   state.dealer = 1
   state.pile = [[], []]
-  state.state = "Discard"
+  state.phase = "Discard"
   state.wait_action = true
   state.init_board = [...field(state)];
   writeCardLog state, 'Init'
 
-function writeCardLog(state: RoundState, _: Phase)
+function writeCardLog(state: GameState, _: Phase)
   //turn := state.turn_16
   state.card_log = [0...16].map () => [0...8].map () => {arr: replicate(48, 0)} 
 
 
-collectCards := (state: RoundState, card: number | null) =>
+collectCards := (state: GameState, card: number | null) =>
   turn := turnPlayer(state)
   pairing := pairingCards state, state.show!
   n := pairing.length
@@ -101,38 +104,38 @@ collectCards := (state: RoundState, card: number | null) =>
     state.pile[turn] = state.pile[turn] ++ state.collect
 
 
-export pickOyaCards := (state: RoundState) =>
+export pickOyaCards := (state: GameState) =>
   c1 := state.stock.pop()
   c2 := state.stock.pop()
   state.oyaCards = [c1!, c2!]
-  state.state = "Oya2"
+  state.phase = "Oya2"
 
-export selectOyaCard := (state: RoundState, card: number) =>
+export selectOyaCard := (state: GameState, card: number) =>
   [c1, c2] := state.oyaCards
   c1Month := c1 / 4 | 0
   c2Month := c2 / 4 | 0
   cardMonth := card / 4 | 0
   if c1Month === c2Month
-    state.state = 'Oya3'
+    state.phase = 'Oya3'
   else if cardMonth <= c1Month && cardMonth <= c2Month
-    state.state = 'Oya3'
+    state.phase = 'Oya3'
     state.dealer = 0
   else
-    state.state = 'Oya3'
+    state.phase = 'Oya3'
     state.dealer = 1
 
-export oya3Phase := (state: RoundState) =>
+export oya3Phase := (state: GameState) =>
   [c1, c2] := state.oyaCards
   state.stock.push(c1)
   state.stock.push(c2)
-  state.stock = shuffle(state.stock) // todo
+  state.stock = properlyShuffle() // todo
   state.oyaCards = []
   if sameMonth c1, c2
-    state.state = 'Init'
+    state.phase = 'Init'
   else
-    state.state = 'NewRound'
+    state.phase = 'DealCards'
 
-export discard := (state: RoundState, card: number) =>
+export discard := (state: GameState, card: number) =>
   player := turnPlayer(state)
   state.turnYakus = yaku(state, player)
   state.turn_point = yakuPoints(state, player) // todo
@@ -140,26 +143,26 @@ export discard := (state: RoundState, card: number) =>
   //ind := state.hand[player].findIndex &[0] === card[0] && &[1] === card[1]
   //state.show = state.hand[player].splice(ind, 1)
   //self.__write_log()
-  state.state = 'DiscardPick'
+  state.phase = 'DiscardPick'
   state.wait_action = pairingCards(state, card).length === 2
 
-export discardPick := (state: RoundState, card: number | null) =>
+export discardPick := (state: GameState, card: number | null) =>
   player := turnPlayer(state)
   if state.show !== null
     ind := state.hand[player].indexOf state.show
     state.hand[player].splice(ind, 1)
   collectCards state, card
   state.show = null
-  state.state = 'Draw'
+  state.phase = 'Draw'
   state.wait_action = false
 
-draw := (state: RoundState) =>
+draw := (state: GameState) =>
   state.show = last(state.stock)!
   // state.show = [state.stock.pop()!] // todo
-  state.state = 'DrawPick'
+  state.phase = 'DrawPick'
   state.wait_action = pairingCards(state, state.show).length === 2
 
-export drawPick := (state: RoundState, card: number | null) =>
+export drawPick := (state: GameState, card: number | null) =>
   state.stock.pop()
   collectCards state, card
   //self.__write_log() todo
@@ -168,26 +171,26 @@ export drawPick := (state: RoundState, card: number | null) =>
   
   state.newYakus = yakuDifference yaku(state, player), state.turnYakus |> .map &[0]
   if state.newYakus.length > 0
-    state.state = 'Yakus'
+    state.phase = 'Yakus'
   else
     state.turn_16 += 1
-    state.state = 'Discard'
+    state.phase = 'Discard'
     state.wait_action = true
     //state.wait_action = yakuPoints(state, player) > state.turn_point && turn_8(state) < 8
 
 
-nextYaku := (state: RoundState) =>
+nextYaku := (state: GameState) =>
   state.newYakus.splice(0, 1)
   if state.newYakus.length === 0
-    state.state = 'KoiKoi'
+    state.phase = 'KoiKoi'
     state.wait_action = true
 
-export claimKoikoi := (state: RoundState, isKoikoi: boolean) =>
+export claimKoikoi := (state: GameState, isKoikoi: boolean) =>
   state.acceptsKoikoi = isKoikoi
   state.wait_action = false
-  state.state = 'ShowKoiKoi'
+  state.phase = 'ShowKoiKoi'
 
-afterKoikoi := (state: RoundState) =>
+afterKoikoi := (state: GameState) =>
   player := turnPlayer(state)
   t8 := turn8(state)
   koikoi := state.acceptsKoikoi
@@ -197,26 +200,43 @@ afterKoikoi := (state: RoundState) =>
   //self.__write_log(is_koikoi) todo
 
   if !koikoi
-    state.state = 'RoundOver'
+    state.phase = 'RoundOver'
     state.wait_action = true
     state.winner = player
     // self.__write_log()
   else if state.turn_16 == 16
-    state.state = 'RoundOver'
+    state.phase = 'RoundOver'
     state.wait_action = true
     state.exhausted = true
     state.winner = state.dealer
     //self.__write_log()
   else
     state.turn_16 += 1
-    state.state = 'Discard'
+    state.phase = 'Discard'
     state.wait_action = true
 
-export nextAction := (state: RoundState) =>
-  switch state.state
+export newRound := (state: GameState) =>
+  if state.winner !== null
+    p := yakuPoints(state, state.winner)
+    if state.winner === 0
+      state.points[0] += p
+      state.points[1] -= p
+    else
+      state.points[0] -= p
+      state.points[1] += p
+
+  clearState state
+  state.stock = properlyShuffle()
+  state.round += 1
+  state.phase = 'DealCards'
+
+export nextAction := (state: GameState) =>
+  console.log state.phase
+  switch state.phase
     "Init"
       clearState state
-    "NewRound"
+      state.phase = "Oya"
+    "DealCards"
       dealCards state
     "DiscardPick"
       discardPick state, null

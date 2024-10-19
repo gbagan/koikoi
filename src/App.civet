@@ -5,7 +5,7 @@ import { LIGHT, SEED, RIBBON, DROSS, SAKE,
         CardInfo, cardInter, sameMonth, initGameState, yaku, yakuPoints,
         pairingCards, YAKU_TEXT, YAKU_CARDS,
         turnPlayer } from './model.civet'
-import { clearState, selectOyaCard, discard, discardPick, drawPick, claimKoikoi, nextAction, fakeDealCards } from './actions.civet'
+import { clearState, selectOyaCard, discard, discardPick, drawPick, claimKoikoi, nextAction, fakeDealCards, newRound as _newRound } from './actions.civet'
 import { delay } from './util.civet'
 import { aiPlays, randomAI } from './ai.civet'
 import Board from './components/Board.civet'
@@ -19,91 +19,91 @@ App: Component := =>
   [hoveredCard, setHoveredCard] := createSignal<CardInfo | null>(null)
 
   newYakus := createMemo =>
-    rstate := state.round_state
-    if rstate.state != 'Yakus'
+    if state.phase != 'Yakus'
       null
     else
-      player := turnPlayer rstate
-      idx := rstate.newYakus[0]
-      [YAKU_TEXT[idx], cardInter(YAKU_CARDS[idx], rstate.pile[player])] as [string, number[]]
+      player := turnPlayer state
+      idx := state.newYakus[0]
+      [YAKU_TEXT[idx], cardInter(YAKU_CARDS[idx], state.pile[player])] as [string, number[]]
 
   pairingHand := createMemo =>
-    rstate := state.round_state
-    rstate.hand[0].filter (card) => pairingCards(rstate, card).length > 0 
+    state.hand[0].filter (card) => pairingCards(state, card).length > 0 
 
   pileByFamily := createMemo =>
-    rstate := state.round_state
     p1 :=
-      light: cardInter rstate.pile[0], LIGHT
-      seed: cardInter rstate.pile[0], SEED
-      ribbon: cardInter rstate.pile[0], RIBBON
-      dross: cardInter(rstate.pile[0], DROSS).filter & !== SAKE
+      light: cardInter state.pile[0], LIGHT
+      seed: cardInter state.pile[0], SEED
+      ribbon: cardInter state.pile[0], RIBBON
+      dross: cardInter(state.pile[0], DROSS).filter & !== SAKE
     p2 :=
-      light: cardInter rstate.pile[1], LIGHT
-      seed: cardInter rstate.pile[1], SEED
-      ribbon: cardInter rstate.pile[1], RIBBON
-      dross: cardInter(rstate.pile[1], DROSS).filter  & !== SAKE
+      light: cardInter state.pile[1], LIGHT
+      seed: cardInter state.pile[1], SEED
+      ribbon: cardInter state.pile[1], RIBBON
+      dross: cardInter(state.pile[1], DROSS).filter  & !== SAKE
     [p1, p2]
 
   test4 := async =>
     setState produce (state) =>
-      clearState state.round_state
+      clearState state
     continueGame()
 
   test := =>
     setState produce (state) =>
-      fakeDealCards state.round_state
-    roundState := state.round_state
-    show := roundState.show
-    roundState2 := {...roundState, show: show === null ? [] : [show]}
-    st := {...state, round_state: roundState2}
-    invoke "test", {gameState: st}
+      fakeDealCards state
+    show := state.show
+    state2 := {...state, show: show === null ? [] : [show]}
+    invoke "test", {gameState: state2}
 
   pickCard := async (card: number) =>
-    let rstate = state.round_state
-    if rstate.animation
+    if state.animation
       return
-    if rstate.state !== 'Oya2' && (turnPlayer(rstate) === 1 || !rstate.wait_action)
+    if state.phase !== 'Oya2' && (turnPlayer(state) === 1 || !state.wait_action)
       return
-    switch rstate.state
+    switch state.phase
       "Oya2"
-        if rstate.oyaCards.includes(card)
+        if state.oyaCards.includes(card)
           setState produce (state) =>
-            selectOyaCard state.round_state, card
+            selectOyaCard state, card
       "Discard"
-        if rstate.hand[0].includes(card)
+        if state.hand[0].includes(card)
           setState produce (state) =>
-            discard state.round_state, card
+            discard state, card
       "DiscardPick"
-        if rstate.show && rstate.fieldSlots.includes(card) && sameMonth(rstate.show, card)
+        if state.show !== null && state.fieldSlots.includes(card) && sameMonth(state.show, card)
           setState produce (state) =>
-            discardPick state.round_state, card
+            discardPick state, card
       "DrawPick"
-        if rstate.show && rstate.fieldSlots.includes(card) && sameMonth(rstate.show, card)
+        console.log "drawPick", card
+        if state.show !== null && state.fieldSlots.includes(card) && sameMonth(state.show, card)
           setState produce (state) =>
-            drawPick state.round_state, card
+            drawPick state, card
     continueGame()
 
   acceptKoikoi := (choice: boolean) =>
     setState produce (state) =>
-      claimKoikoi state.round_state, choice
+      claimKoikoi state, choice
+    continueGame()
+
+  newRound := =>
+    setState produce (state) =>
+      _newRound state
     continueGame()
 
   continueGame := async =>
-    setState("round_state", "animation", true)
+    setState "animation", true
     loop
-      await delay (state.round_state.state === 'Yakus' ? 3000 : 1500)
-      if state.round_state.state === 'Oya2'
-        setState("round_state", "animation", false)
+      await delay (state.phase === 'Yakus' ? 3000 : 1500)
+      if state.phase === 'Oya2'
+        setState "animation", false
         break
-      if !state.round_state.wait_action
+      if !state.wait_action
         setState produce (state) =>
-          nextAction state.round_state
-      else if turnPlayer(state.round_state) === 1
+          nextAction state
+      else if turnPlayer(state) === 1
         setState produce (state) =>
-          aiPlays(state.round_state, randomAI)
+          aiPlays state, randomAI
       else
-        setState("round_state", "animation", false)
+        setState "animation", false
         break
     return
 
@@ -114,22 +114,23 @@ App: Component := =>
       <button .btn onClick=test>Test AI
       <button .btn onClick=test4>Nouvelle Partie
       <button .btn>Crédits
-    {if state.round_state.state === 'RoundOver' then
+    {if state.phase === 'RoundOver' then
       <RoundOver
-        yakus=yaku(state.round_state, turnPlayer(state.round_state))
-        total=yakuPoints(state.round_state, turnPlayer(state.round_state))
+        yakus=yaku(state, turnPlayer(state))
+        total=yakuPoints(state, turnPlayer(state))
+        newRound=newRound
       />
     else   
       <Board
-        phase={state.round_state.state}
-        hand1={state.round_state.hand[0]}
-        hand2={state.round_state.hand[1]}
-        field={state.round_state.fieldSlots}
-        draw={state.round_state.stock}
-        show={state.round_state.show}
+        phase={state.phase}
+        hand1={state.hand[0]}
+        hand2={state.hand[1]}
+        field={state.fieldSlots}
+        draw={state.stock}
+        show={state.show}
         pile1={pileByFamily()[0]}
         pile2={pileByFamily()[1]}
-        oyaCards={state.round_state.oyaCards}
+        oyaCards={state.oyaCards}
         hoveredCard=hoveredCard()
         pairingHand={pairingHand()}
         pickCard=pickCard
@@ -137,10 +138,10 @@ App: Component := =>
       />
     }
     <Info
-      phase=state.round_state.state
-      turnPlayer=turnPlayer(state.round_state)
-      winner={state.round_state.winner}
-      wait_action={state.round_state.wait_action}
+      phase=state.phase
+      turnPlayer=turnPlayer(state)
+      winner=state.winner
+      wait_action=state.wait_action
       hoveredCard=hoveredCard()
     >
     {newYakus() !== null &&
@@ -158,7 +159,7 @@ App: Component := =>
                 />
               }
     }
-    {state.round_state.state === 'KoiKoi' && turnPlayer(state.round_state) === 0 &&
+    {state.phase === 'KoiKoi' && turnPlayer(state) === 0 &&
       <div class="absolute z-50 top-0 left-0 w-full h-full flex items-center">
         <div class="w-full bg-white bg-opacity-90 border-4 flex flex-col justify-center">
           <div .text-8xl>Acceptes-tu le Koï-Koï?
@@ -167,19 +168,17 @@ App: Component := =>
             <button .large-btn onClick=[acceptKoikoi, false]>❌ Non
     }
 
-    {state.round_state.state === 'ShowKoiKoi' &&
+    {state.phase === 'ShowKoiKoi' &&
       <div class="absolute z-50 top-0 left-0 w-full h-full flex items-center">
         <div class="w-full bg-white bg-opacity-90 border-4 flex justify-center">
             <div
               class="text-9xl"
               classList={
-                'text-green-500': state.round_state.acceptsKoikoi
-                'text-red-500': !state.round_state.acceptsKoikoi
+                'text-green-500': state.acceptsKoikoi
+                'text-red-500': !state.acceptsKoikoi
               }  
-            >Koï-Koï {state.round_state.acceptsKoikoi ? "accepté" : "refusé"}
+            >Koï-Koï {state.acceptsKoikoi ? "accepté" : "refusé"}
     }
-
-
 
   <dialog .dialog ref={dialog}>
 
