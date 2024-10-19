@@ -7,6 +7,7 @@ type RoundOverComponent = Component<{
   newRound: =>
 }>
 
+// todo
 const RoundOver: RoundOverComponent = (props) =>
   <div class="bg-board bg-opacity-90 rounded-lg border-1">
     <div .dialog-title.text-white>Fin de la manche

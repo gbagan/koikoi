@@ -2,5 +2,6 @@
 [x] Forbid to make actions during animation
 [ ] Add a card when the river is empty
 [ ] Manage draw games
-[ ] Shuffle the cards properly after the Oya phase
-[ ] Check draw pick, it seems there is a bug    
+[x] Shuffle the cards properly after the Oya phase
+[ ] Check draw pick, it seems there is a bug
+[ ] Count the sake as a dross card 

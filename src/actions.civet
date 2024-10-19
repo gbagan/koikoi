@@ -30,7 +30,7 @@ export function clearState(state: GameState)
   state.oyaCards = []
   state.collect = []
   state.turn_16 = 1
-  state.dealer = 0 // todo  dealer !== null ? dealer : (Math.random() * 2 | 0) as any
+  state.dealer = 0
   state.koikoi = [[0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0]]
   state.winner = null
   state.exhausted = false
@@ -128,7 +128,7 @@ export oya3Phase := (state: GameState) =>
   [c1, c2] := state.oyaCards
   state.stock.push(c1)
   state.stock.push(c2)
-  state.stock = properlyShuffle() // todo
+  state.stock = properlyShuffle()
   state.oyaCards = []
   if sameMonth c1, c2
     state.phase = 'Init'
@@ -138,7 +138,7 @@ export oya3Phase := (state: GameState) =>
 export discard := (state: GameState, card: number) =>
   player := turnPlayer(state)
   state.turnYakus = yaku(state, player)
-  state.turn_point = yakuPoints(state, player) // todo
+  state.turn_point = yakuPoints(state, player)
   state.show = card
   //ind := state.hand[player].findIndex &[0] === card[0] && &[1] === card[1]
   //state.show = state.hand[player].splice(ind, 1)

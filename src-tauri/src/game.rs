@@ -2,11 +2,11 @@ use serde_big_array::BigArray;
 use std::collections::HashSet;
 use lazy_static::lazy_static;
 
-pub type Card = (u8, u8);
+pub type Card = usize;
 
 #[derive(PartialEq, Eq, Debug, serde::Deserialize)]
 
-pub enum State {
+pub enum Phase {
     Init,
     Discard,
     DiscardPick,
@@ -19,25 +19,25 @@ pub enum State {
 const DEFAULT_ROUND_TOTAL: u32 = 8;
 const DEFAULT_INIT_POINT: u32 = 30;
 
-const CRANE: [Card; 1] = [(1,1)];
-const CURTAIN: [Card; 1] = [(3,1)];
-const MOON: [Card; 1] = [(8,1)];
-const RAIN_MAN:  [Card; 1] = [(11,1)];
-const PHOENIX: [Card; 1] = [(12,1)];
-const SAKE: [Card; 1] = [(9,1)];
+const CRANE: [Card; 1] = [0];
+const CURTAIN: [Card; 1] = [8];
+const MOON: [Card; 1] = [28];
+const RAIN_MAN:  [Card; 1] = [40];
+const PHOENIX: [Card; 1] = [44];
+const SAKE: [Card; 1] = [32];
 
-const LIGHT: [Card; 5] = [(1,1),(3,1),(8,1),(11,1),(12,1)];
-const SEED:  [Card; 9] = [(2,1),(4,1),(5,1),(6,1),(7,1),(8,2),(9,1),(10,1),(11,2)];
-const RIBBON: [Card; 10] = [(1,2),(2,2),(3,2),(4,2),(5,2),(6,2),(7,2),(9,2),(10,2),(11,3)];
-const DROSS: [Card; 25] = [(1,3),(1,4),(2,3),(2,4),(3,3),(3,4),(4,3),(4,4),(5,3),(5,4),(6,3),(6,4),(7,3),
-          (7,4),(8,3),(8,4),(9,3),(9,4),(10,3),(10,4),(11,4),(12,2),(12,3),(12,4),(9,1)];
+const LIGHT: [Card; 5] = [0, 8, 28, 40, 44];
+const SEED:  [Card; 9] = [4, 12, 16, 20, 24, 29, 32, 36, 41];
+const RIBBON: [Card; 10] = [1, 5, 9, 13, 17, 21, 25, 33, 37, 42];
+const DROSS: [Card; 25] = [2, 3, 6, 7, 10, 11, 14, 15, 18, 19, 22, 23, 26, 27, 30, 31,
+34, 35, 38, 39, 43, 45, 46, 47, 32];
         
-const BOAR_DEER_BUTTERFLY: [Card; 3] = [(6,1),(7,1),(10,1)];
-const FLOWER_SAKE: [Card; 2] = [(3,1),(9,1)];
-const MOON_SAKE: [Card; 2] = [(8,1),(9,1)];
-const RED_RIBBON: [Card; 3] = [(1,2),(2,2),(3,2)];
-const BLUE_RIBBON: [Card; 3] = [(6,2),(9,2),(10,2)];
-const RED_BLUE_RIBBON: [Card; 6] = [(1,2),(2,2),(3,2),(6,2),(9,2),(10,2)];
+const BOAR_DEER_BUTTERFLY: [Card; 3] = [20,24,36];
+const FLOWER_SAKE: [Card; 2] = [8, 32];
+const MOON_SAKE: [Card; 2] = [28, 32];
+const RED_RIBBON: [Card; 3] = [1, 5, 9];
+const BLUE_RIBBON: [Card; 3] = [21, 33, 37];
+const RED_BLUE_RIBBON: [Card; 6] = [1, 5, 9, 21, 33, 37];
 
 lazy_static! {
     pub static ref CARD_LIST: Vec<Vec<Card>> = vec![
@@ -67,10 +67,13 @@ pub struct F32_48 {
 type CardLog = [[F32_48; 8]; 16];
 
 #[derive(serde::Deserialize)]
-pub struct RoundState {
+pub struct GameState {
+    pub round: usize,
+    pub points: [i8; 2],
+
     pub hand: [Vec<Card>; 2],
     pub pile: [Vec<Card>; 2],
-    pub field_slot: Vec<Card>,
+    pub field: Vec<Card>,
     pub stock: Vec<Card>,
     
     pub init_board: Vec<Card>,
@@ -85,14 +88,14 @@ pub struct RoundState {
     exhausted: bool,
     turn_point: i32,
     
-    pub state: State,
+    pub phase: Phase,
     wait_action: bool,
 
     #[serde(with = "BigArray")]
     pub card_log: CardLog,
 }
 
-impl RoundState {
+impl GameState {
     /*
     fn new(dealer: Option<usize>) -> Self {
         let hand = [vec!(), vec!()];
@@ -149,6 +152,7 @@ impl RoundState {
         (self.turn_16+1)/2
     }
 
+    /*
     pub fn field(&self) -> Vec<Card> {
         let mut res: Vec<_> = self.field_slot
             .iter()
@@ -158,6 +162,7 @@ impl RoundState {
         res.sort_unstable();
         res
     }
+    */
 
     pub fn unseen_cards(&self, player: usize) -> Vec<Card> {
         let mut unseen = self.stock.clone();
@@ -170,7 +175,7 @@ impl RoundState {
     }
 
     pub fn pairing_cards(&self) -> Vec<Card> {
-        self.field().iter().filter(|&&(c, _)| c == self.show[0].0).copied().collect()
+        self.field.iter().filter(|&&c| c/4 == self.show[0] / 4).copied().collect()
     }
 
     fn field_collect(&self) -> Vec<Card> {
@@ -388,11 +393,11 @@ impl RoundState {
         
         if num_light == 5 {
             yaku.push((1, "Five Lights", 10));
-        } else if num_light == 4 && !pile.contains(&(11, 1)) {
+        } else if num_light == 4 && !pile.contains(&40) {
             yaku.push((2, "Four Lights", 8));
         } else if num_light == 4 {
             yaku.push((3, "Rainy Four Lights", 7));
-        } else if num_light == 3 && !pile.contains(&(11, 1)) {
+        } else if num_light == 3 && !pile.contains(&40) {
             yaku.push((4, "Three Lights", 5));
         }
 
@@ -540,6 +545,8 @@ impl RoundState {
     */
 }
 
+
+/*
 #[derive(serde::Deserialize)]
 pub struct GameState {
     pub round_total: usize,
@@ -551,4 +558,4 @@ pub struct GameState {
     pub game_over: bool,
     pub winner: Option<usize>
 }
-
+*/

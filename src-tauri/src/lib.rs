@@ -12,9 +12,6 @@ use game::GameState;
 use game_tensor::{action_mask, feature_tensor};
 use model::DiscardModel;
 
-use ndarray_npy::read_npy;
-
-
 type B = Candle<f32, i64>;
 
 struct AppState {
@@ -41,7 +38,7 @@ async fn test(state: tauri::State<'_, Mutex<AppState>>, game_state: GameState) -
     let features = feature_tensor(&game_state, &state.device);
     //let output = state.pick_model.forward(tensor);
     //let mov = output.argmax(1).into_scalar();
-    let mask = action_mask(&game_state.round_state);
+    let mask = action_mask(&game_state);
     let mask = Tensor::<B,1>::from_data(mask.as_slice(), &state.device);
     predict(&state.discard_model, features, mask, &state.device);
     //println!("{}", mask);

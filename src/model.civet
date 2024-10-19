@@ -16,7 +16,6 @@ export type CardInfo =
 export function cardInfo (card: number, type: CardType, idx: number): CardInfo
   {card, type, idx}
 
-
 export type GameState =
   round: number
   points: [number, number]
@@ -130,7 +129,7 @@ export function initGameState(): GameState
     show: null
     collect: []
     turn_16: 1
-    dealer: 0 // todo  dealer !== null ? dealer : (Math.random() * 2 | 0) as any
+    dealer: 0
     koikoi: [[0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0]]
     acceptsKoikoi: false
     winner: null
@@ -149,26 +148,6 @@ export function field(state: GameState): number[]
   state
     |> .fieldSlots.filter(& !== null)
     |> sortCards
-
-/*
-export function initGameState(
-  round_num=1,
-  round_total=8,
-  init_points: [number, number]=[30, 30],
-  //player_names: [string, string]=['Player1','Player2']
-): GameState
-  state: GameState := 
-    round_total: round_total
-    init_points: [init_points[0], init_points[1]]
-    init_dealer: 0       
-    //player_names: player_names
-    round_state: initRoundState()
-    //round: round_num
-    //points: init_points
-    game_over: false
-    //winner: null
-  state
-*/
 
 export turn8 := (state: GameState) =>
   (state.turn_16+1) / 2 | 0
@@ -247,10 +226,12 @@ export function yaku(state: GameState, player: 0 | 1): [number, number][]
   numDross := cardInterLen(pile, DROSS)
   if numDross >= 10
     total.push [14, numDross-9]
-            
+
+  /*          
   if koikoi > 0
     total.push [15, koikoi]
-        
+  */  
+
   total
 
 export YAKU_TEXT: string[] := [

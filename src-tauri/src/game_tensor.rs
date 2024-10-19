@@ -2,14 +2,13 @@ use std::{array::from_fn, collections::HashSet};
 
 use ndarray::prelude::*;
 use burn::prelude::*;
-use crate::game::{Card, CARD_LIST, State, RoundState, GameState};
+use crate::game::{Card, CARD_LIST, Phase, GameState};
 use ndarray_npy::read_npy;
-
 
 fn card_to_multi_hot(card_list: &[Card]) -> [f32; 48] {
     let mut card_multi_hot = [0f32; 48];
-    for (x, y) in card_list {
-        card_multi_hot[((x-1)*4+(y-1)) as usize] = 1f32;
+    for &c in card_list {
+        card_multi_hot[c] = 1f32;
     }
     card_multi_hot
 }
@@ -39,29 +38,29 @@ fn feature_one_hot(pos: usize, feature_length: usize) -> Vec<f32> {
 }
 
 fn game_status_array(state: &GameState) -> Array2<f32> {
-    let turn_player = state.round_state.turn_player();
+    let turn_player = state.turn_player();
     let idle_player = 1 - turn_player;
         
     let point_diff = (state.points[turn_player] - state.points[idle_player]) as f32;
         
     let game_points = feature_tuple(point_diff/2., [0.5,1.,1.5], [1.,0.5,0.1]);
     let my_yaku_points = feature_tuple(
-            state.round_state.yaku_points(turn_player) as f32, [0.5,1.,1.5], [1.,0.5,0.1]);
+            state.yaku_points(turn_player) as f32, [0.5,1.,1.5], [1.,0.5,0.1]);
 
     let op_yaku_points = feature_tuple(
-            state.round_state.yaku_points(idle_player) as f32, [0.5,1.,1.5], [1.,0.5,0.1]);
+            state.yaku_points(idle_player) as f32, [0.5,1.,1.5], [1.,0.5,0.1]);
         
     let round =  feature_one_hot(state.round-1, 8);
-    let turn = feature_one_hot(state.round_state.turn_16-1, 16);
-    let dealer = feature_one_hot(state.round_state.dealer, 2);
+    let turn = feature_one_hot(state.turn_16-1, 16);
+    let dealer = feature_one_hot(state.dealer, 2);
         
     let my_koikoi_num = feature_tuple(
-            state.round_state.koikoi_num(turn_player) as f32, [1.,2.], [1.,1.]);
+            state.koikoi_num(turn_player) as f32, [1.,2.], [1.,1.]);
     let op_koikoi_num = feature_tuple(
-            state.round_state.koikoi_num(idle_player) as f32, [1.,2.], [1.,1.]);
+            state.koikoi_num(idle_player) as f32, [1.,2.], [1.,1.]);
         
-    let my_koikoi = state.round_state.koikoi[turn_player].map(|x| x as f32);
-    let op_koikoi = state.round_state.koikoi[idle_player].map(|x| x as f32);
+    let my_koikoi = state.koikoi[turn_player].map(|x| x as f32);
+    let op_koikoi = state.koikoi[idle_player].map(|x| x as f32);
     
     let f_array = [
         game_points.as_slice(),
@@ -83,12 +82,12 @@ fn game_status_array(state: &GameState) -> Array2<f32> {
         .to_owned()
 }
 
-fn yaku_status_array(state: &RoundState) -> Array2<f32> {
+fn yaku_status_array(state: &GameState) -> Array2<f32> {
     let turn_player = state.turn_player();
     let idle_player = 1 - turn_player;
 
     let my_hand_cards: HashSet<_> = state.hand[turn_player].iter().copied().collect();
-    let board_cards: HashSet<_> = state.field().iter().copied().collect();
+    let board_cards: HashSet<_> = state.field.iter().copied().collect();
     let my_collect_cards: HashSet<_> = state.pile[turn_player].iter().copied().collect();
     let op_collect_cards: HashSet<_> = state.pile[idle_player].iter().copied().collect();
     let mut unseen_cards: HashSet<_> = state.hand[idle_player].iter().copied().collect();
@@ -134,7 +133,7 @@ pub fn suit_array() -> Array2<f32> {
     array
 }
 
-fn init_position_array(state: &RoundState) -> Array2<f32> {
+fn init_position_array(state: &GameState) -> Array2<f32> {
     let turn_player = state.turn_player();
     let cards_in_my_hand = card_to_multi_hot(&state.hand[turn_player]);
     let cards_in_board = card_to_multi_hot(&state.init_board);
@@ -143,11 +142,11 @@ fn init_position_array(state: &RoundState) -> Array2<f32> {
     ndarray::stack!(Axis(0), cards_in_my_hand, cards_in_board, unseen_cards)
 }
 
-fn current_position_array(state: &RoundState) -> Array2<f32> {
+fn current_position_array(state: &GameState) -> Array2<f32> {
     let turn_player = state.turn_player();
     let cards_in_my_hand = card_to_multi_hot(&state.hand[turn_player]);
     let cards_in_my_collect = card_to_multi_hot(&state.pile[turn_player]);
-    let cards_in_board = card_to_multi_hot(&state.field());
+    let cards_in_board = card_to_multi_hot(&state.field);
     // Bug Confirmed, for supporting the trained models, keep it as is
     // f_dict['CardInOpCollect'] = card_to_multi_hot(self.pile[self.idle_player])
     let cards_in_op_collect = card_to_multi_hot(&state.pile[turn_player]);
@@ -162,9 +161,9 @@ fn current_position_array(state: &RoundState) -> Array2<f32> {
     )
 }
 
-fn pairing_state_array(state: &RoundState) -> Array2<f32> {
+fn pairing_state_array(state: &GameState) -> Array2<f32> {
     let (showed_cards, paired_cards) = 
-        if state.state == State::DiscardPick || state.state == State::DrawPick {
+        if state.phase == Phase::DiscardPick || state.phase == Phase::DrawPick {
             (card_to_multi_hot(&state.show), card_to_multi_hot(&state.pairing_cards()))
         } else {
             (card_to_multi_hot(&[]), card_to_multi_hot(&[]))
@@ -172,7 +171,7 @@ fn pairing_state_array(state: &RoundState) -> Array2<f32> {
     ndarray::stack!(Axis(0), showed_cards, paired_cards)
 }
 
-fn log_array(state: &RoundState) -> Array2<f32> {
+fn log_array(state: &GameState) -> Array2<f32> {
     let mut turn_list: Vec<_> = (0..state.turn_16).rev().collect();
     for i in state.turn_16..16 {
         turn_list.push(i);
@@ -193,12 +192,12 @@ pub fn feature_tensor<B: Backend>(state: &GameState, device: &Device<B>) -> Tens
         Axis(0),
         reserve_array(),
         game_status_array(state),
-        yaku_status_array(&state.round_state),
+        yaku_status_array(state),
         suit_array(),
-        init_position_array(&state.round_state),
-        current_position_array(&state.round_state),
-        pairing_state_array(&state.round_state),
-        log_array(&state.round_state)
+        init_position_array(state),
+        current_position_array(state),
+        pairing_state_array(state),
+        log_array(state)
     ];
     let (dimx, dimy) = f.dim();
 
@@ -220,11 +219,11 @@ pub fn feature_tensor<B: Backend>(state: &GameState, device: &Device<B>) -> Tens
         .reshape([1, dimx, dimy])
 }
 
-pub fn action_mask(state: &RoundState) -> Vec<f32> {
-    match state.state {
-        State::Discard => card_to_multi_hot(&state.hand[state.turn_player()]).to_vec(),
-        State::DiscardPick | State::DrawPick => card_to_multi_hot(&state.pairing_cards()).to_vec(),
-        State::KoiKoi => vec!(1.0, 1.0),
+pub fn action_mask(state: &GameState) -> Vec<f32> {
+    match state.phase {
+        Phase::Discard => card_to_multi_hot(&state.hand[state.turn_player()]).to_vec(),
+        Phase::DiscardPick | Phase::DrawPick => card_to_multi_hot(&state.pairing_cards()).to_vec(),
+        Phase::KoiKoi => vec!(1.0, 1.0),
         _ => vec!()
     }
 }

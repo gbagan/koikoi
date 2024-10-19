@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core"
 import { Component, createMemo, createSignal } from 'solid-js'
 import { createStore, produce } from "solid-js/store"
 import { LIGHT, SEED, RIBBON, DROSS, SAKE,
-        CardInfo, cardInter, sameMonth, initGameState, yaku, yakuPoints,
+        CardInfo, cardInter, field, sameMonth, initGameState, yaku, yakuPoints,
         pairingCards, YAKU_TEXT, YAKU_CARDS,
         turnPlayer } from './model.civet'
 import { clearState, selectOyaCard, discard, discardPick, drawPick, claimKoikoi, nextAction, fakeDealCards, newRound as _newRound } from './actions.civet'
@@ -50,9 +50,13 @@ App: Component := =>
   test := =>
     setState produce (state) =>
       fakeDealCards state
-    show := state.show
-    state2 := {...state, show: show === null ? [] : [show]}
-    invoke "test", {gameState: state2}
+    {show, fieldSlots, ...state2} := state
+    state3 := {
+      ...state2
+      show: show === null ? [] : [show]
+      field: field(state)
+    }
+    invoke "test", {gameState: state3}
 
   pickCard := async (card: number) =>
     if state.animation
@@ -161,7 +165,7 @@ App: Component := =>
     }
     {state.phase === 'KoiKoi' && turnPlayer(state) === 0 &&
       <div class="absolute z-50 top-0 left-0 w-full h-full flex items-center">
-        <div class="w-full bg-white bg-opacity-90 border-4 flex flex-col justify-center">
+        <div class="w-full bg-white bg-opacity-90 border-4 flex flex-col justify-center gap-8">
           <div .text-8xl>Acceptes-tu le Koï-Koï?
           <div .flex.justify-around>
             <button .large-btn onClick=[acceptKoikoi, true]>✅ Oui
