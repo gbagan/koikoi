@@ -1,4 +1,4 @@
-import { Card, RoundState, field, State, cardEq, pairingCards, turnPlayer, turn8, yaku, yakuPoints } from './model.civet'
+import { RoundState, field, Phase, sameMonth, pairingCards, turnPlayer, turn8, yaku, yakuPoints } from './model.civet'
 import shuffle from 'lodash.shuffle'
 import { countIf, last, replicate } from './util.civet'
 
@@ -10,7 +10,7 @@ export function clearState(state: RoundState)
   state.pile = [[], []]
   state.stock = []
   state.init_board = []
-  state.field_slot = []
+  state.fieldSlots = []
   state.show = null
   state.oyaCards = []
   state.collect = []
@@ -26,19 +26,15 @@ export function clearState(state: RoundState)
   state.wait_action = false
   state.card_log = []
   loop
-    cards: Card[] .= []
-    for i .= 1; i < 13; i++
-      for j .= 1; j < 5; j++
-        cards.push [i, j]
-    cards = shuffle(cards)
+    cards: number[] := shuffle [0...48]
     hand1 := cards[0...8]
     hand2 := cards[8...16]
     field := cards[16...24]
     flag .= false
     for suit .= 1; suit < 13; suit++
-      flag = flag || countIf(hand1, (c) => c[0] === suit) === 4
-        || countIf(hand2, (c) => c[0] === suit) === 4
-        || countIf(field, (c) => c[0] === suit) === 4
+      flag = flag || countIf(hand1, (c) => (c / 4 | 0) === suit) === 4
+        || countIf(hand2, (c) => (c / 4 | 0) === suit) === 4
+        || countIf(field, (c) => (c / 4 | 0) === suit) === 4
     if !flag
       state.stock = cards
       break
@@ -50,7 +46,7 @@ export function dealCards(state: RoundState)
   hand2 := state.stock[8...16]
     //hand2.sort_unstable();
   state.hand = [hand1, hand2]
-  state.field_slot = state.stock[16...24] ++ replicate(10, [0, 0])
+  state.fieldSlots = state.stock[16...24] ++ replicate(8, null) as any
   state.stock = state.stock[24..]
   state.state = "Discard"
   state.wait_action = true
@@ -59,10 +55,7 @@ export function dealCards(state: RoundState)
 
 export function fakeDealCards(state: RoundState)
   clearState(state)
-  cards: Card[] .= []
-  for i .= 1; i < 13; i++
-    for j .= 1; j < 5; j++
-      cards.push [i, j]
+  cards: number[] .= [0...48]
   [c, ...cards2] := cards
   cards = cards2
   cards.push(c)
@@ -71,7 +64,7 @@ export function fakeDealCards(state: RoundState)
   hand2 := cards[8...16]
   //hand2.sort_unstable();
   state.hand = [hand1, hand2]
-  state.field_slot = cards[16...24] ++ replicate(10, [0, 0])
+  state.fieldSlots = cards[16...24] ++ replicate(10, null) as any
   state.stock = cards[24..]
   state.dealer = 1
   state.pile = [[], []]
@@ -80,31 +73,31 @@ export function fakeDealCards(state: RoundState)
   state.init_board = [...field(state)];
   writeCardLog state, 'Init'
 
-function writeCardLog(state: RoundState, s: State)
+function writeCardLog(state: RoundState, s: Phase)
   //turn := state.turn_16
   state.card_log = [0...16].map () => [0...8].map () => {arr: replicate(48, 0)} 
 
 
-collectCards := (state: RoundState, card: Card | null) =>
+collectCards := (state: RoundState, card: number | null) =>
   turn := turnPlayer(state)
   pairing := pairingCards state, state.show!
   n := pairing.length
   if n === 0
     state.collect = []
-    index := state.field_slot.findIndex &[0] + &[1] === 0
+    index := state.fieldSlots.findIndex & === null
     if index >= 0
-      state.field_slot[index] = state.show!
+      state.fieldSlots[index] = state.show!
   else if n == 1 || n == 3
     state.collect = [state.show!] ++ pairing
     for paired_card of pairing
-      index := state.field_slot.findIndex (c) => cardEq(c, paired_card)
-      state.field_slot[index] = [0, 0]
+      index := state.fieldSlots.findIndex (c) => c !== null && c === paired_card
+      state.fieldSlots[index] = null
     state.pile[turn] = state.pile[turn] ++ state.collect
   else
     state.collect = [state.show!, card!]
-    index := state.field_slot.findIndex (c) => cardEq(c, card!)
+    index := state.fieldSlots.indexOf card!
     if index >= 0
-      state.field_slot[index] = [0, 0]
+      state.fieldSlots[index] = null
     state.pile[turn] = state.pile[turn] ++ state.collect
 
 
@@ -114,11 +107,14 @@ export pickOyaCards := (state: RoundState) =>
   state.oyaCards = [c1!, c2!]
   state.state = "Oya2"
 
-export selectOyaCard := (state: RoundState, card: Card) =>
+export selectOyaCard := (state: RoundState, card: number) =>
   [c1, c2] := state.oyaCards
-  if c1[0] === c2[0]
+  c1Month := c1 / 4 | 0
+  c2Month := c2 / 4 | 0
+  cardMonth := card / 4 | 0
+  if c1Month === c2Month
     state.state = 'Oya3'
-  else if card[0] <= c1[0] && card[0] <= c2[0]
+  else if cardMonth <= c1Month && cardMonth <= c2Month
     state.state = 'Oya3'
     state.dealer = 0
   else
@@ -131,12 +127,12 @@ export oya3Phase := (state: RoundState) =>
   state.stock.push(c2)
   state.stock = shuffle(state.stock) // todo
   state.oyaCards = []
-  if c1[0] === c2[0]
+  if sameMonth c1, c2
     state.state = 'Init'
   else
     state.state = 'NewRound'
 
-export discard := (state: RoundState, card: Card) =>
+export discard := (state: RoundState, card: number) =>
   player := turnPlayer(state)
   state.turnYakus = yaku(state, player)
   state.turn_point = yakuPoints(state, player) // todo
@@ -147,10 +143,10 @@ export discard := (state: RoundState, card: Card) =>
   state.state = 'DiscardPick'
   state.wait_action = pairingCards(state, card).length === 2
 
-export discardPick := (state: RoundState, card: Card | null) =>
+export discardPick := (state: RoundState, card: number | null) =>
   player := turnPlayer(state)
-  if state.show
-    ind := state.hand[player].findIndex (c) => cardEq(c, state.show!)
+  if state.show !== null
+    ind := state.hand[player].indexOf state.show
     state.hand[player].splice(ind, 1)
   collectCards state, card
   state.show = null
@@ -163,7 +159,7 @@ draw := (state: RoundState) =>
   state.state = 'DrawPick'
   state.wait_action = pairingCards(state, state.show).length === 2
 
-export drawPick := (state: RoundState, card: Card | null) =>
+export drawPick := (state: RoundState, card: number | null) =>
   state.stock.pop()
   collectCards state, card
   //self.__write_log() todo

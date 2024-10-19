@@ -1,6 +1,6 @@
 import { Component, For, createMemo } from "solid-js"
 import { Transition } from "solid-transition-group"
-import { State, CardInfo, cardYakus } from "../model.civet"
+import { Phase, CardInfo, cardYakus } from "../model.civet"
 import { intercalate } from "../util.civet"
 import { Blue } from "./Emph.civet"
 
@@ -9,7 +9,7 @@ type Message = string | ["B", string]
 const emph = (x: string) => ["B", x] as ["B", string]
 
 type InfoComponent = Component<{
-  state: State
+  phase: Phase
   turnPlayer: 0 | 1
   wait_action: boolean
   hoveredCard: CardInfo | null
@@ -39,15 +39,15 @@ const Info: InfoComponent = (props) =>
         text ++ [" Tu peux également former "] ++ intercalate(yakus[1..].map(([yaku]) => emph(YAKU_NAME[yaku]) as Message), ", ")
       else
         text
-    else if props.state === 'Oya2'
+    else if props.phase === 'Oya2'
     then ["Choisis une carte. Si elle est d'un mois plus petit que l'autre, tu commenceras la partie."]
     else if props.turnPlayer === 1 || !props.wait_action
     then null
-    else if props.state === 'Discard'
+    else if props.phase === 'Discard'
     then ["Choisis une carte de ta ", emph("main"), " pour l'associer à une carte de la ", emph("rivière"), '.']
-    else if props.state === 'DiscardPick'
+    else if props.phase === 'DiscardPick'
     then ["Choisis une carte de la ", emph("riviète"), " pour l'associer à la carte que tu as précédemment chosie."]
-    else if props.state === 'DrawPick'
+    else if props.phase === 'DrawPick'
     then ["Choisis une carte de la ", emph("riviète"), " pour l'associer à la carte de la ", emph("pioche"), "."]    
     else null
 

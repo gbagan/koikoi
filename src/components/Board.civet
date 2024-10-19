@@ -1,29 +1,29 @@
 import { Component, createMemo, Index } from "solid-js"
-import { Card, CardInfo, cardInfo, cardEq, State } from "../model.civet"
+import { CardInfo, cardInfo, sameMonth, Phase } from "../model.civet"
 
 type BoardComponent = Component<{
-  phase: State
-  hand1: Card[]
-  hand2: Card[]
-  field: Card[]
-  draw: Card[]
-  show: Card | null
+  phase: Phase
+  hand1: number[]
+  hand2: number[]
+  field: (number | null)[]
+  draw: number[]
+  show: number | null
   pile1: Pile
   pile2: Pile
-  oyaCards: Card[]
+  oyaCards: number[]
   hoveredCard: CardInfo | null
-  pairingHand: Card[]
+  pairingHand: number[]
   setHoveredCard: (c: CardInfo | null) =>
-  pickCard: (card: Card) =>
+  pickCard: (card: number) =>
 }>
 
 type Pile =
-  light: Card[]
-  seed: Card[]
-  ribbon: Card[]
-  dross: Card[]
+  light: number[]
+  seed: number[]
+  ribbon: number[]
+  dross: number[]
 
-cardTransform := (card: CardInfo, phase: State, show: boolean) =>
+cardTransform := (card: CardInfo, phase: Phase, show: boolean) =>
   translate := switch card.type
     when 'hand1'
       `translate(${10 + card.idx * 5}rem, 40rem)`
@@ -51,27 +51,27 @@ cardTransform := (card: CardInfo, phase: State, show: boolean) =>
 
 Board: BoardComponent := (props) =>
   isHoveredCard := (card: CardInfo) =>
-    props.hoveredCard !== null && cardEq(props.hoveredCard.card, card.card)
+    props.hoveredCard !== null && props.hoveredCard.card === card.card
   
   isGray := (card: CardInfo) =>
     switch card.type
       when 'hand1'
-        props.pairingHand.every (c) => !cardEq(c, card.card)
+        !props.pairingHand.includes(card.card)
       when 'field'
         //if props.show &&  todo
-        if props.show
-          return card.card[0] !== props.show[0]
+        if props.show !== null
+          return !sameMonth(card.card, props.show)
 
         if props.hoveredCard === null
           return false 
-        props.hoveredCard.type === 'hand1' && props.hoveredCard.card[0] !== card.card[0]
+        props.hoveredCard.type === 'hand1' && !sameMonth(props.hoveredCard.card, card.card)
       else
         false
 
   cardZIndex := (card: CardInfo) =>
     switch card.type
       'draw'
-        if props.show && cardEq(card.card, props.show) then 35 else 30
+        if card.card === props.show then 35 else 30
       'hand1' 40 + card.idx
       'hand2' 40 + card.idx
       'field' 50 + card.idx
@@ -92,15 +92,16 @@ Board: BoardComponent := (props) =>
     hand1 := props.hand1.map (card, i) => cardInfo(card, 'hand1', i) as CardInfo
     hand2 := props.hand2.map (card, i) => cardInfo(card, 'hand2', i) as CardInfo
     field := props.field
-      |> .map (card, i) => cardInfo(card, 'field', i) as CardInfo
-      |> .filter (card) => card.card[0] + card.card[1] !== 0
+      |> .map (card, i) => [i, card]
+      |> .filter [, card] => card !== null      
+      |> .map [i, card] => cardInfo(card as number, 'field', i as number) as CardInfo
     draw := props.draw.map (card) => cardInfo(card, 'draw', 0) as CardInfo
     pile1 := pileCards(0)
     pile2 := pileCards(1)
     oyaCards := props.oyaCards.map (card, i) => cardInfo(card, 'oya', i) as CardInfo
     //show := props.show.map (card, i) => cardInfo(card, 'show', i) as CardInfo
     cards := hand1 ++ hand2 ++ field ++ draw ++ pile1 ++ pile2 ++ oyaCards
-    cards.sort((c1, c2) => c1.id - c2.id)
+    cards.sort((c1, c2) => c1.card - c2.card)
     cards
 
   <div class="z-20 h-[50vw] w-[50vw] bg-board bg-opacity-90 relative">
@@ -129,9 +130,9 @@ Board: BoardComponent := (props) =>
         >
           <div
             class="relative w-full h-full transition-transform duration-1000 preserve-3d"
-            classList={"shadow-picked": card().type === 'hand1' && props.show !== null && cardEq(card().card, props.show)}
+            classList={"shadow-picked": card().type === 'hand1' && card().card === props.show}
             style={
-              transform: cardTransform(card(), props.phase, props.show !== null && cardEq(card().card, props.show))
+              transform: cardTransform(card(), props.phase, card().card === props.show)
               top: "-50%"
               left: "-50%"
               filter: isGray(card()) ? "grayscale(100%)" : ""
@@ -143,7 +144,7 @@ Board: BoardComponent := (props) =>
             <div
               class="absolute w-full h-full backface-hidden bg-no-cover"
               style={
-                "background-image": `url("../cards/${card().card[0]}-${card().card[1]}.svg`
+                "background-image": `url("../cards/${(card().card / 4 | 0) + 1}-${card().card % 4 + 1}.svg`
               }
             />
             <div

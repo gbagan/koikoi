@@ -2,8 +2,8 @@ import { invoke } from "@tauri-apps/api/core"
 import { Component, createMemo, createSignal } from 'solid-js'
 import { createStore, produce } from "solid-js/store"
 import { LIGHT, SEED, RIBBON, DROSS, SAKE,
-        Card, CardInfo, cardInter, initGameState,
-        cardEq, pairingCards, YAKU_TEXT, YAKU_CARDS,
+        CardInfo, cardInter, sameMonth, initGameState,
+        pairingCards, YAKU_TEXT, YAKU_CARDS,
         turnPlayer } from './model.civet'
 import { clearState, selectOyaCard, discard, discardPick, drawPick, nextAction, fakeDealCards } from './actions.civet'
 import { delay } from './util.civet'
@@ -24,7 +24,7 @@ App: Component := =>
     else
       player := turnPlayer rstate
       idx := rstate.newYakus[0]
-      [YAKU_TEXT[idx], cardInter(YAKU_CARDS[idx], rstate.pile[player])] as [string, Card[]]
+      [YAKU_TEXT[idx], cardInter(YAKU_CARDS[idx], rstate.pile[player])] as [string, number[]]
 
   pairingHand := createMemo =>
     rstate := state.round_state
@@ -36,12 +36,12 @@ App: Component := =>
       light: cardInter rstate.pile[0], LIGHT
       seed: cardInter rstate.pile[0], SEED
       ribbon: cardInter rstate.pile[0], RIBBON
-      dross: cardInter(rstate.pile[0], DROSS).filter (c) => !cardEq(c, SAKE)
+      dross: cardInter(rstate.pile[0], DROSS).filter & !== SAKE
     p2 :=
       light: cardInter rstate.pile[1], LIGHT
       seed: cardInter rstate.pile[1], SEED
       ribbon: cardInter rstate.pile[1], RIBBON
-      dross: cardInter(rstate.pile[1], DROSS).filter (c) => !cardEq(c, SAKE)
+      dross: cardInter(rstate.pile[1], DROSS).filter  & !== SAKE
     [p1, p2]
 
   test4 := async =>
@@ -58,33 +58,37 @@ App: Component := =>
     st := {...state, round_state: roundState2}
     invoke "test", {gameState: st}
 
-  pickCard := async (card: Card) =>
+  pickCard := async (card: number) =>
     let rstate = state.round_state
+    if rstate.animation
+      return
     if rstate.state !== 'Oya2' && (turnPlayer(rstate) === 1 || !rstate.wait_action)
       return
     switch rstate.state
       "Oya2"
-        if rstate.oyaCards.some((c) => cardEq(c, card))
+        if rstate.oyaCards.includes(card)
           setState produce (state) =>
             selectOyaCard(state.round_state, card)
       'Discard'
-        if rstate.hand[0].some((c) => cardEq(c, card))
+        if rstate.hand[0].includes(card)
           setState produce (state) =>
             discard(state.round_state, card)
       "DiscardPick"
-        if rstate.show && rstate.field_slot.some((c) => cardEq(c, card)) && rstate.show[0] === card[0]
+        if rstate.show && rstate.fieldSlots.includes(card) && sameMonth(rstate.show, card)
           setState produce (state) =>
             discardPick(state.round_state, card)
       "DrawPick"
-        if rstate.show && rstate.field_slot.some((c) => cardEq(c, card)) && rstate.show[0] === card[0]
+        if rstate.show && rstate.fieldSlots.includes(card) && sameMonth(rstate.show, card)
           setState produce (state) =>
             drawPick(state.round_state, card)
     continueGame()
 
   continueGame := async =>
+    setState("round_state", "animation", true)
     loop
       await delay (state.round_state.state === 'Yakus' ? 3000 : 1500)
       if state.round_state.state === 'Oya2'
+        setState("round_state", "animation", false)
         break
       if !state.round_state.wait_action
         setState produce (state) =>
@@ -93,6 +97,7 @@ App: Component := =>
         setState produce (state) =>
           aiPlays(state.round_state, randomAI)
       else
+        setState("round_state", "animation", false)
         break
     return
 
@@ -107,7 +112,7 @@ App: Component := =>
       phase={state.round_state.state}
       hand1={state.round_state.hand[0]}
       hand2={state.round_state.hand[1]}
-      field={state.round_state.field_slot}
+      field={state.round_state.fieldSlots}
       draw={state.round_state.stock}
       show={state.round_state.show}
       pile1={pileByFamily()[0]}
@@ -119,7 +124,7 @@ App: Component := =>
       setHoveredCard=setHoveredCard
     />
     <Info
-      state=state.round_state.state
+      phase=state.round_state.state
       turnPlayer=turnPlayer(state.round_state)
       wait_action={state.round_state.wait_action}
       hoveredCard=hoveredCard()
@@ -134,7 +139,7 @@ App: Component := =>
                 <div
                   class="w-[10rem] h-[16rem] no-cover bg-no-repeat"
                   style={
-                    "background-image": `url("../cards/${card[0]}-${card[1]}.svg`
+                    "background-image": `url("../cards/${(card / 4 | 0) + 1}-${card % 4 + 1}.svg`
                   }
                 />
               }
