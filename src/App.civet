@@ -70,7 +70,7 @@ App: Component := =>
         if rstate.oyaCards.includes(card)
           setState produce (state) =>
             selectOyaCard state.round_state, card
-      'Discard'
+      "Discard"
         if rstate.hand[0].includes(card)
           setState produce (state) =>
             discard state.round_state, card
@@ -139,6 +139,7 @@ App: Component := =>
     <Info
       phase=state.round_state.state
       turnPlayer=turnPlayer(state.round_state)
+      winner={state.round_state.winner}
       wait_action={state.round_state.wait_action}
       hoveredCard=hoveredCard()
     >

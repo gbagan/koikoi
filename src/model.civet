@@ -35,7 +35,7 @@ export type RoundState =
 
   acceptsKoikoi: boolean
 
-  winner: number | null,
+  winner: 0 | 1 | null
   exhausted: boolean
   turnYakus: [number, number][]
   newYakus: number[]
@@ -57,7 +57,7 @@ export type GameState =
   round: number
   points: [number, number]
   game_over: boolean
-  winner: number | null
+  //winner: 0 | 1 | null
 
 
 //CRANE = {(1,1)}
@@ -159,7 +159,7 @@ export function initGameState(
     round: round_num
     points: init_points
     game_over: false
-    winner: null
+    //winner: null
   state
 
 export turn8 := (state: RoundState) =>
@@ -176,15 +176,6 @@ export function pairingCards(state: RoundState, card: number): number[]
 
 export cardInter := (xs: number[], ys: number[]) =>
   xs.filter (c) => ys.includes(c)
-  /*
-  output := []
-  for c1 of xs
-    for c2 of ys
-      if c1 === c2
-        output.push c1
-  output
-  */
-
 
 cardInterLen := (xs: number[], ys: number[]) =>
   total .= 0

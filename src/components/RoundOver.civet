@@ -15,7 +15,7 @@ const RoundOver: RoundOverComponent = (props) =>
           {props.yakus.map [idx, points] =>
             <tr>
               <td class="border">{YAKU_TEXT[idx]}
-              <td class="border">{points}
+              <td class="border">{points} points
           }
           <tr>
             <td class="border">Koi-Koi

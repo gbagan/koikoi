@@ -11,6 +11,7 @@ const emph = (x: string) => ["B", x] as ["B", string]
 type InfoComponent = Component<{
   phase: Phase
   turnPlayer: 0 | 1
+  winner: 0 | 1 | null
   wait_action: boolean
   hoveredCard: CardInfo | null
 }>
@@ -52,7 +53,11 @@ const Info: InfoComponent = (props) =>
     else null
 
   girlExpression := createMemo =>
-    if props.turnPlayer === 1
+    if props.winner === 0
+    then "bg-crying"
+    else if props.winner === 1
+    then "bg-happy"
+    else if props.turnPlayer === 1
     then "bg-thinking"
     else "bg-speaking"
 

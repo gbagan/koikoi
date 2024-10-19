@@ -4,10 +4,6 @@ export default {
   content: ["./src/**/*.{ts,tsx,civet}"],
   theme: {
     extend: {
-      colors: {
-        'bordeaux': '#9a2910'
-      },
-
       height: {
         '30': '7.5rem',
       },
@@ -21,6 +17,7 @@ export default {
         crying: "url('../girl_crying.webp')",
         speaking: "url('../girl_speaking.webp')",
         surprised: "url('../girl_surprised.webp')",
+        backface: 'radial-gradient(100.40% 90% at 95% 5%, #9a2910 0%, #600000 100%)',
       },
       gridTemplateColumns: {
         '20/80': '20% 80%',
@@ -31,6 +28,7 @@ export default {
       animation: {
         'flip-y': 'flip-y 500ms linear forwards',
         'lion-arrow': 'lion-arrow 2000ms linear forwards infinite',
+        'oya-card': 'oya-card 500ms linear forwards infinite'
       },
       keyframes: {
         "flip-y": {
@@ -40,6 +38,10 @@ export default {
         "lion-arrow": {
           '0%, 100%': {opacity: '0.7'},
           '50%': {opacity: '0'    },
+        },
+        "oya-card": {
+          '0%, 100%': {transform: 'rotateY(180deg) scale(1.1)'},
+          '50%': {transform: 'rotateY(180deg) scale(1)'},
         }
       },
 

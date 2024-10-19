@@ -73,7 +73,7 @@ export function fakeDealCards(state: RoundState)
   state.init_board = [...field(state)];
   writeCardLog state, 'Init'
 
-function writeCardLog(state: RoundState, s: Phase)
+function writeCardLog(state: RoundState, _: Phase)
   //turn := state.turn_16
   state.card_log = [0...16].map () => [0...8].map () => {arr: replicate(48, 0)} 
 
@@ -190,13 +190,13 @@ export claimKoikoi := (state: RoundState, isKoikoi: boolean) =>
 afterKoikoi := (state: RoundState) =>
   player := turnPlayer(state)
   t8 := turn8(state)
-  isKoikoi := state.acceptsKoikoi
+  koikoi := state.acceptsKoikoi
   // if yakuPoints(state, player) > state.turn_point && t8 === 8
   //  isKoikoi = false
-  state.koikoi[player][t8-1] = if isKoikoi then 1 else 0
+  state.koikoi[player][t8-1] = if koikoi then 1 else 0
   //self.__write_log(is_koikoi) todo
 
-  if !isKoikoi
+  if !koikoi
     state.state = 'RoundOver'
     state.wait_action = true
     state.winner = player
