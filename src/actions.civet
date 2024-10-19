@@ -198,12 +198,12 @@ afterKoikoi := (state: RoundState) =>
 
   if !isKoikoi
     state.state = 'RoundOver'
-    state.wait_action = false
+    state.wait_action = true
     state.winner = player
     // self.__write_log()
   else if state.turn_16 == 16
     state.state = 'RoundOver'
-    state.wait_action = false
+    state.wait_action = true
     state.exhausted = true
     state.winner = state.dealer
     //self.__write_log()
@@ -213,7 +213,6 @@ afterKoikoi := (state: RoundState) =>
     state.wait_action = true
 
 export nextAction := (state: RoundState) =>
-  console.log state.state
   switch state.state
     "Init"
       clearState state

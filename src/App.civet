@@ -2,14 +2,15 @@ import { invoke } from "@tauri-apps/api/core"
 import { Component, createMemo, createSignal } from 'solid-js'
 import { createStore, produce } from "solid-js/store"
 import { LIGHT, SEED, RIBBON, DROSS, SAKE,
-        CardInfo, cardInter, sameMonth, initGameState,
+        CardInfo, cardInter, sameMonth, initGameState, yaku, yakuPoints,
         pairingCards, YAKU_TEXT, YAKU_CARDS,
         turnPlayer } from './model.civet'
-import { clearState, selectOyaCard, discard, discardPick, drawPick, nextAction, fakeDealCards } from './actions.civet'
+import { clearState, selectOyaCard, discard, discardPick, drawPick, claimKoikoi, nextAction, fakeDealCards } from './actions.civet'
 import { delay } from './util.civet'
 import { aiPlays, randomAI } from './ai.civet'
 import Board from './components/Board.civet'
 import Info from './components/Info.civet'
+import RoundOver from './components/RoundOver.civet'
 
 App: Component := =>
   let dialog!: HTMLDialogElement
@@ -68,19 +69,24 @@ App: Component := =>
       "Oya2"
         if rstate.oyaCards.includes(card)
           setState produce (state) =>
-            selectOyaCard(state.round_state, card)
+            selectOyaCard state.round_state, card
       'Discard'
         if rstate.hand[0].includes(card)
           setState produce (state) =>
-            discard(state.round_state, card)
+            discard state.round_state, card
       "DiscardPick"
         if rstate.show && rstate.fieldSlots.includes(card) && sameMonth(rstate.show, card)
           setState produce (state) =>
-            discardPick(state.round_state, card)
+            discardPick state.round_state, card
       "DrawPick"
         if rstate.show && rstate.fieldSlots.includes(card) && sameMonth(rstate.show, card)
           setState produce (state) =>
-            drawPick(state.round_state, card)
+            drawPick state.round_state, card
+    continueGame()
+
+  acceptKoikoi := (choice: boolean) =>
+    setState produce (state) =>
+      claimKoikoi state.round_state, choice
     continueGame()
 
   continueGame := async =>
@@ -108,21 +114,28 @@ App: Component := =>
       <button .btn onClick=test>Test AI
       <button .btn onClick=test4>Nouvelle Partie
       <button .btn>Crédits
-    <Board
-      phase={state.round_state.state}
-      hand1={state.round_state.hand[0]}
-      hand2={state.round_state.hand[1]}
-      field={state.round_state.fieldSlots}
-      draw={state.round_state.stock}
-      show={state.round_state.show}
-      pile1={pileByFamily()[0]}
-      pile2={pileByFamily()[1]}
-      oyaCards={state.round_state.oyaCards}
-      hoveredCard=hoveredCard()
-      pairingHand={pairingHand()}
-      pickCard=pickCard
-      setHoveredCard=setHoveredCard
-    />
+    {if state.round_state.state === 'RoundOver' then
+      <RoundOver
+        yakus=yaku(state.round_state, turnPlayer(state.round_state))
+        total=yakuPoints(state.round_state, turnPlayer(state.round_state))
+      />
+    else   
+      <Board
+        phase={state.round_state.state}
+        hand1={state.round_state.hand[0]}
+        hand2={state.round_state.hand[1]}
+        field={state.round_state.fieldSlots}
+        draw={state.round_state.stock}
+        show={state.round_state.show}
+        pile1={pileByFamily()[0]}
+        pile2={pileByFamily()[1]}
+        oyaCards={state.round_state.oyaCards}
+        hoveredCard=hoveredCard()
+        pairingHand={pairingHand()}
+        pickCard=pickCard
+        setHoveredCard=setHoveredCard
+      />
+    }
     <Info
       phase=state.round_state.state
       turnPlayer=turnPlayer(state.round_state)
@@ -144,6 +157,15 @@ App: Component := =>
                 />
               }
     }
+    {state.round_state.state === 'KoiKoi' && turnPlayer(state.round_state) === 0 &&
+      <div class="absolute z-50 top-0 left-0 w-full h-full flex items-center">
+        <div class="w-full bg-white bg-opacity-90 border-4 flex flex-col justify-center">
+          <div .text-8xl>Acceptes-tu le Koï-Koï?
+          <div .flex.justify-around>
+            <button .large-btn onClick=[acceptKoikoi, true]>✅ Oui
+            <button .large-btn onClick=[acceptKoikoi, false]>❌ Non
+    }
+
     {state.round_state.state === 'ShowKoiKoi' &&
       <div class="absolute z-50 top-0 left-0 w-full h-full flex items-center">
         <div class="w-full bg-white bg-opacity-90 border-4 flex justify-center">
@@ -155,6 +177,7 @@ App: Component := =>
               }  
             >Koï-Koï {state.round_state.acceptsKoikoi ? "accepté" : "refusé"}
     }
+
 
 
   <dialog .dialog ref={dialog}>

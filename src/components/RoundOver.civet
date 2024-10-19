@@ -1,0 +1,30 @@
+import { Component } from "solid-js"
+import { YAKU_TEXT } from "../model.civet"
+
+type RoundOverComponent = Component<{
+  yakus: [number, number][]
+  total: number
+}>
+
+const RoundOver: RoundOverComponent = (props) =>
+  <div class="bg-board bg-opacity-90 rounded-lg border-1">
+    <div .dialog-title.text-white>Fin de la manche
+    <div .dialog-body>
+      <table>
+        <tbody class="[&>*:nth-child(odd)]:bg-white [&>*:nth-child(even)]:bg-gray-400">
+          {props.yakus.map [idx, points] =>
+            <tr>
+              <td class="border">{YAKU_TEXT[idx]}
+              <td class="border">{points}
+          }
+          <tr>
+            <td class="border">Koi-Koi
+            <td class="border">+0
+          <tr>
+            <td class="border font-bold">Total
+            <td class="border font-bold">{props.total} points
+
+    <div .dialog-buttons>
+      <button .btn>Nouvelle manche
+
+export default RoundOver
