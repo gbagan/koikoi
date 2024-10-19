@@ -1,15 +1,15 @@
 import { invoke } from "@tauri-apps/api/core"
 import { Component, createMemo, createSignal } from 'solid-js'
 import { createStore, produce } from "solid-js/store"
-import { Card, CardInfo, cardInter, clearState, initGameState, cardEq, selectOyaCard, yaku, YAKU_TEXT, YAKU_CARDS
-        discard, discardPick, drawPick, turnPlayer, nextAction, fakeDealCards } from './model.civet'
+import { LIGHT, SEED, RIBBON, DROSS, SAKE,
+        Card, CardInfo, cardInter, initGameState,
+        cardEq, pairingCards, YAKU_TEXT, YAKU_CARDS,
+        turnPlayer } from './model.civet'
+import { clearState, selectOyaCard, discard, discardPick, drawPick, nextAction, fakeDealCards } from './actions.civet'
 import { delay } from './util.civet'
 import { aiPlays, randomAI } from './ai.civet'
 import Board from './components/Board.civet'
 import Info from './components/Info.civet'
-
-function yakuDifference(ys1: [number, number][], ys2: [number, number][])
-  ys1.filter (y1) => ys2.every((y2) => y1[0] !== y2[0] || y1[1] !== y2[1])
 
 App: Component := =>
   let dialog!: HTMLDialogElement
@@ -23,16 +23,31 @@ App: Component := =>
       null
     else
       player := turnPlayer rstate
-      diff := yakuDifference(yaku(rstate, player), rstate.turnYakus)
-      [idx] := diff[0]
+      idx := rstate.newYakus[0]
       [YAKU_TEXT[idx], cardInter(YAKU_CARDS[idx], rstate.pile[player])] as [string, Card[]]
 
+  pairingHand := createMemo =>
+    rstate := state.round_state
+    rstate.hand[0].filter (card) => pairingCards(rstate, card).length > 0 
+
+  pileByFamily := createMemo =>
+    rstate := state.round_state
+    p1 :=
+      light: cardInter rstate.pile[0], LIGHT
+      seed: cardInter rstate.pile[0], SEED
+      ribbon: cardInter rstate.pile[0], RIBBON
+      dross: cardInter(rstate.pile[0], DROSS).filter (c) => !cardEq(c, SAKE)
+    p2 :=
+      light: cardInter rstate.pile[1], LIGHT
+      seed: cardInter rstate.pile[1], SEED
+      ribbon: cardInter rstate.pile[1], RIBBON
+      dross: cardInter(rstate.pile[1], DROSS).filter (c) => !cardEq(c, SAKE)
+    [p1, p2]
 
   test4 := async =>
     setState produce (state) =>
       clearState state.round_state
     continueGame()
-
 
   test := =>
     setState produce (state) =>
@@ -68,7 +83,7 @@ App: Component := =>
 
   continueGame := async =>
     loop
-      await delay 1500
+      await delay (state.round_state.state === 'Yakus' ? 3000 : 1500)
       if state.round_state.state === 'Oya2'
         break
       if !state.round_state.wait_action
@@ -81,7 +96,7 @@ App: Component := =>
         break
     return
 
-  <div class="relative w-screen min-h-screen bg-main bg-cover bg-no-repeat flex flew-row items-center justify-around portrait:flex-col">
+  <div class="relative w-screen min-h-screen bg-main bg-cover bg-no-repeat select-none flex flew-row items-center justify-around portrait:flex-col">
     <div class="absolute bg-white w-full h-full opacity-30 z-10 pointer-events-none" />
     <div class="flex flex-col bg-board b-cover p-6 border-2 border-black rounded-xl gap-4 z-20">
       <div class="text-4xl text-white">Koï-Koï
@@ -95,10 +110,11 @@ App: Component := =>
       field={state.round_state.field_slot}
       draw={state.round_state.stock}
       show={state.round_state.show}
-      pile1={state.round_state.pile[0]}
-      pile2={state.round_state.pile[1]}
+      pile1={pileByFamily()[0]}
+      pile2={pileByFamily()[1]}
       oyaCards={state.round_state.oyaCards}
       hoveredCard=hoveredCard()
+      pairingHand={pairingHand()}
       pickCard=pickCard
       setHoveredCard=setHoveredCard
     />

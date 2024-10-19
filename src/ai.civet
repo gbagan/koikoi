@@ -1,4 +1,5 @@
-import { Card, RoundState, discard, discardPick, drawPick, claimKoikoi, pairingCards } from './model.civet'
+import { Card, RoundState, pairingCards } from './model.civet'
+import { discard, discardPick, drawPick, claimKoikoi } from './actions.civet'
 import { randomChoice } from './util.civet' 
 
 type AI =

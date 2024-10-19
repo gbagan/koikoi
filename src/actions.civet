@@ -1,0 +1,233 @@
+import { Card, RoundState, field, State, cardEq, pairingCards, turnPlayer, turn8, yaku, yakuPoints } from './model.civet'
+import shuffle from 'lodash.shuffle'
+import { countIf, last, replicate } from './util.civet'
+
+function yakuDifference(ys1: [number, number][], ys2: [number, number][])
+  ys1.filter (y1) => ys2.every((y2) => y1[0] !== y2[0] || y1[1] !== y2[1])
+
+export function clearState(state: RoundState)
+  state.hand = [[], []]
+  state.pile = [[], []]
+  state.stock = []
+  state.init_board = []
+  state.field_slot = []
+  state.show = null
+  state.oyaCards = []
+  state.collect = []
+  state.turn_16 = 1
+  state.dealer = 0 // todo  dealer !== null ? dealer : (Math.random() * 2 | 0) as any
+  state.koikoi = [[0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0]]
+  state.winner = null
+  state.exhausted = false
+  state.turnYakus = []
+  state.newYakus = []
+  state.turn_point = 0
+  state.state = "Oya"
+  state.wait_action = false
+  state.card_log = []
+  loop
+    cards: Card[] .= []
+    for i .= 1; i < 13; i++
+      for j .= 1; j < 5; j++
+        cards.push [i, j]
+    cards = shuffle(cards)
+    hand1 := cards[0...8]
+    hand2 := cards[8...16]
+    field := cards[16...24]
+    flag .= false
+    for suit .= 1; suit < 13; suit++
+      flag = flag || countIf(hand1, (c) => c[0] === suit) === 4
+        || countIf(hand2, (c) => c[0] === suit) === 4
+        || countIf(field, (c) => c[0] === suit) === 4
+    if !flag
+      state.stock = cards
+      break
+  return
+
+export function dealCards(state: RoundState)
+  hand1 := state.stock[0...8]
+    //hand1.sort_unstable()
+  hand2 := state.stock[8...16]
+    //hand2.sort_unstable();
+  state.hand = [hand1, hand2]
+  state.field_slot = state.stock[16...24] ++ replicate(10, [0, 0])
+  state.stock = state.stock[24..]
+  state.state = "Discard"
+  state.wait_action = true
+  state.init_board = [...field(state)]
+  writeCardLog state, 'Init' // todo
+
+export function fakeDealCards(state: RoundState)
+  clearState(state)
+  cards: Card[] .= []
+  for i .= 1; i < 13; i++
+    for j .= 1; j < 5; j++
+      cards.push [i, j]
+  [c, ...cards2] := cards
+  cards = cards2
+  cards.push(c)
+  hand1 := cards[0...8]
+  //hand1.sort_unstable()
+  hand2 := cards[8...16]
+  //hand2.sort_unstable();
+  state.hand = [hand1, hand2]
+  state.field_slot = cards[16...24] ++ replicate(10, [0, 0])
+  state.stock = cards[24..]
+  state.dealer = 1
+  state.pile = [[], []]
+  state.state = "Discard"
+  state.wait_action = true
+  state.init_board = [...field(state)];
+  writeCardLog state, 'Init'
+
+function writeCardLog(state: RoundState, s: State)
+  //turn := state.turn_16
+  state.card_log = [0...16].map () => [0...8].map () => {arr: replicate(48, 0)} 
+
+
+collectCards := (state: RoundState, card: Card | null) =>
+  turn := turnPlayer(state)
+  pairing := pairingCards state, state.show!
+  n := pairing.length
+  if n === 0
+    state.collect = []
+    index := state.field_slot.findIndex &[0] + &[1] === 0
+    if index >= 0
+      state.field_slot[index] = state.show!
+  else if n == 1 || n == 3
+    state.collect = [state.show!] ++ pairing
+    for paired_card of pairing
+      index := state.field_slot.findIndex (c) => cardEq(c, paired_card)
+      state.field_slot[index] = [0, 0]
+    state.pile[turn] = state.pile[turn] ++ state.collect
+  else
+    state.collect = [state.show!, card!]
+    index := state.field_slot.findIndex (c) => cardEq(c, card!)
+    if index >= 0
+      state.field_slot[index] = [0, 0]
+    state.pile[turn] = state.pile[turn] ++ state.collect
+
+
+export pickOyaCards := (state: RoundState) =>
+  c1 := state.stock.pop()
+  c2 := state.stock.pop()
+  state.oyaCards = [c1!, c2!]
+  state.state = "Oya2"
+
+export selectOyaCard := (state: RoundState, card: Card) =>
+  [c1, c2] := state.oyaCards
+  if c1[0] === c2[0]
+    state.state = 'Oya3'
+  else if card[0] <= c1[0] && card[0] <= c2[0]
+    state.state = 'Oya3'
+    state.dealer = 0
+  else
+    state.state = 'Oya3'
+    state.dealer = 1
+
+export oya3Phase := (state: RoundState) =>
+  [c1, c2] := state.oyaCards
+  state.stock.push(c1)
+  state.stock.push(c2)
+  state.stock = shuffle(state.stock) // todo
+  state.oyaCards = []
+  if c1[0] === c2[0]
+    state.state = 'Init'
+  else
+    state.state = 'NewRound'
+
+export discard := (state: RoundState, card: Card) =>
+  player := turnPlayer(state)
+  state.turnYakus = yaku(state, player)
+  state.turn_point = yakuPoints(state, player) // todo
+  state.show = card
+  //ind := state.hand[player].findIndex &[0] === card[0] && &[1] === card[1]
+  //state.show = state.hand[player].splice(ind, 1)
+  //self.__write_log()
+  state.state = 'DiscardPick'
+  state.wait_action = pairingCards(state, card).length === 2
+
+export discardPick := (state: RoundState, card: Card | null) =>
+  player := turnPlayer(state)
+  if state.show
+    ind := state.hand[player].findIndex (c) => cardEq(c, state.show!)
+    state.hand[player].splice(ind, 1)
+  collectCards state, card
+  state.show = null
+  state.state = 'Draw'
+  state.wait_action = false
+
+draw := (state: RoundState) =>
+  state.show = last(state.stock)!
+  // state.show = [state.stock.pop()!] // todo
+  state.state = 'DrawPick'
+  state.wait_action = pairingCards(state, state.show).length === 2
+
+export drawPick := (state: RoundState, card: Card | null) =>
+  state.stock.pop()
+  collectCards state, card
+  //self.__write_log() todo
+  state.show = null
+  player := turnPlayer(state)
+  
+  state.newYakus = yakuDifference yaku(state, player), state.turnYakus |> .map &[0]
+  if state.newYakus.length > 0
+    state.state = 'Yakus'
+  else
+    state.turn_16 += 1
+    state.state = 'Discard'
+    state.wait_action = true
+    //state.wait_action = yakuPoints(state, player) > state.turn_point && turn_8(state) < 8
+
+
+nextYaku := (state: RoundState) =>
+  state.newYakus.splice(0, 1)
+  if state.newYakus.length === 0
+    state.state = 'KoiKoi'
+    state.wait_action = true
+
+export claimKoikoi := (state: RoundState, isKoikoi: boolean) =>
+  player := turnPlayer(state)
+  t8 := turn8(state)
+  
+  // if yakuPoints(state, player) > state.turn_point && t8 === 8
+  //  isKoikoi = false
+  state.koikoi[player][t8-1] = if isKoikoi === true then 1 else 0
+  //self.__write_log(is_koikoi) todo
+
+  if !isKoikoi
+    state.state = 'RoundOver'
+    state.wait_action = false
+    state.winner = player
+    // self.__write_log()
+  else if state.turn_16 == 16
+    state.state = 'RoundOver'
+    state.wait_action = false
+    state.exhausted = true
+    state.winner = state.dealer
+    //self.__write_log()
+  else
+    state.turn_16 += 1
+    state.state = 'Discard'
+    state.wait_action = true
+
+export nextAction := (state: RoundState) =>
+  console.log state, state
+  switch state.state
+    "Init"
+      clearState state
+    "NewRound"
+      dealCards state
+    "DiscardPick"
+      discardPick state, null
+    "Oya"
+      pickOyaCards state
+    "Oya3"
+      oya3Phase state
+    "Draw"
+      draw state
+    "DrawPick"  
+      drawPick state, null
+    "Yakus"
+      nextYaku state
+    else {}

@@ -8,13 +8,20 @@ type BoardComponent = Component<{
   field: Card[]
   draw: Card[]
   show: Card | null
-  pile1: Card[]
-  pile2: Card[]
+  pile1: Pile
+  pile2: Pile
   oyaCards: Card[]
   hoveredCard: CardInfo | null
+  pairingHand: Card[]
   setHoveredCard: (c: CardInfo | null) =>
   pickCard: (card: Card) =>
 }>
+
+type Pile =
+  light: Card[]
+  seed: Card[]
+  ribbon: Card[]
+  dross: Card[]
 
 cardTransform := (card: CardInfo, phase: State, show: boolean) =>
   translate := switch card.type
@@ -23,15 +30,15 @@ cardTransform := (card: CardInfo, phase: State, show: boolean) =>
     when 'hand2'
       `translate(${10 + card.idx * 5}rem, 10rem)`
     when "field"
-      `translate(${10 + (card.idx % 8) * 5}rem, ${card.idx < 8 ? 21 : 29}rem)`
+      `translate(${10 + (card.idx / 2 | 0) * 5}rem, ${21 + 8 * (card.idx % 2)}rem)`
     when "draw"
       "translate(3rem, 25rem)"
     when "pile1"
-      `translate(${10 + card.idx * 3}rem, 46rem)`
+      `translate(${1.5 + card.idx * 2}rem, 46rem)`
     when "pile2"
-      `translate(${10 + card.idx * 3}rem, 4rem)`
+      `translate(${1.5 + card.idx * 2}rem, 4rem)`
     when "oya"
-      `translate(${15 + 20 * card.idx}rem, 25rem)`     
+      `translate(${15 + 20 * card.idx}rem, 25rem)`
 
   rotate := if phase === 'Oya2' || (card.type === 'draw' || card.type === 'hand2') && !show then "rotateY(180deg)" else "rotateY(0)"
   scale :=
@@ -48,6 +55,8 @@ Board: BoardComponent := (props) =>
   
   isGray := (card: CardInfo) =>
     switch card.type
+      when 'hand1'
+        props.pairingHand.every (c) => !cardEq(c, card.card)
       when 'field'
         //if props.show &&  todo
         if props.show
@@ -68,6 +77,16 @@ Board: BoardComponent := (props) =>
       'field' 50 + card.idx
       else 70
 
+  pileCards := (n: 0 | 1) =>
+    output: CardInfo[] := []
+    pile := n === 0 ? props.pile1 : props.pile2
+    idx .= 0
+    for family of [pile.light, pile.seed, pile.ribbon, pile.dross]
+      for card of family
+        output.push cardInfo(card, n === 0 ? 'pile1' : 'pile2', idx)
+        idx += 1
+      idx += 1
+    output
 
   allCards := createMemo =>
     hand1 := props.hand1.map (card, i) => cardInfo(card, 'hand1', i) as CardInfo
@@ -76,15 +95,28 @@ Board: BoardComponent := (props) =>
       |> .map (card, i) => cardInfo(card, 'field', i) as CardInfo
       |> .filter (card) => card.card[0] + card.card[1] !== 0
     draw := props.draw.map (card) => cardInfo(card, 'draw', 0) as CardInfo
-    pile1 := props.pile1.map (card, i) => cardInfo(card, 'pile1', i) as CardInfo
-    pile2 := props.pile2.map (card, i) => cardInfo(card, 'pile2', i) as CardInfo
+    pile1 := pileCards(0)
+    pile2 := pileCards(1)
     oyaCards := props.oyaCards.map (card, i) => cardInfo(card, 'oya', i) as CardInfo
     //show := props.show.map (card, i) => cardInfo(card, 'show', i) as CardInfo
     cards := hand1 ++ hand2 ++ field ++ draw ++ pile1 ++ pile2 ++ oyaCards
     cards.sort((c1, c2) => c1.id - c2.id)
     cards
-  
+
   <div class="z-20 h-[50vw] w-[50vw] bg-board bg-opacity-90 relative">
+    {!['Init', 'Oya', 'Oya2', 'Oya3'].includes(props.phase) &&
+      <>
+        <div class="absolute text-white left-2 top-[37rem]">
+          Lumières: {props.pile1.light.length}<br/>
+          Animaux: {props.pile1.seed.length}<br/>
+          Rubans: {props.pile1.ribbon.length}<br/>
+          Plaines: {props.pile1.dross.length}
+        <div class="absolute text-white left-2 top-[7rem]">
+          Lumières: {props.pile2.light.length}<br/>
+          Animaux: {props.pile2.seed.length}<br/>
+          Rubans: {props.pile2.ribbon.length}<br/>
+          Plaines: {props.pile2.dross.length}
+    }
     <Index each={allCards()}>
       {(card) =>
         <div 
@@ -109,7 +141,7 @@ Board: BoardComponent := (props) =>
             onPointerLeave={[props.setHoveredCard, null]}
         >
             <div
-              class="absolute w-full h-full backface-hidden"
+              class="absolute w-full h-full backface-hidden bg-no-cover"
               style={
                 "background-image": `url("../cards/${card().card[0]}-${card().card[1]}.svg`
               }

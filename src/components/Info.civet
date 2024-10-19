@@ -4,7 +4,7 @@ import { State, CardInfo, cardYakus } from "../model.civet"
 import { intercalate } from "../util.civet"
 import { Blue } from "./Emph.civet"
 
-type Message = String | ["B", String]
+type Message = string | ["B", string]
 
 const emph = (x: string) => ["B", x] as ["B", string]
 
@@ -17,7 +17,7 @@ type InfoComponent = Component<{
 
 YAKU_NAME: Record<string, string> :=
   light: "Lumière"
-  dross: "Fleur"
+  dross: "Plaine"
   ribbon: "Ruban"
   seed: "Animal"
   bdb: "Sanglier-Cerf-Papillon"
@@ -29,7 +29,7 @@ YAKU_NAME: Record<string, string> :=
 
 const Info: InfoComponent = (props) =>  
   message := createMemo =>
-    if props.hoveredCard !== null && ["hand1", "field"].includes(props.hoveredCard.type)
+    if props.hoveredCard !== null && ["hand1", "field", "pile1"].includes(props.hoveredCard.type)
     then
       yakus := cardYakus(props.hoveredCard.card)
       [yaku, amount] := yakus[0]
@@ -75,7 +75,7 @@ const Info: InfoComponent = (props) =>
                 //["R", text] <Red>{text}
                 //["G", text] <Green>{text}
                 ["B", text] <Blue>{text}
-                else m as string
+                else m
             }
       }
 
