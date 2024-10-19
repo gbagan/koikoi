@@ -260,6 +260,7 @@ impl RoundState {
     }
     */
 
+    /*
     fn _collect_card(&mut self, card: Card) {
         let pairing_card = self.pairing_cards();
         let n = pairing_card.len();
@@ -376,6 +377,7 @@ impl RoundState {
             self.wait_action = true;
         }
     }
+    */
 
     fn yaku(&self, player: usize) -> Vec<(i32, &'static str, i32)> {
         let mut yaku = Vec::new();
@@ -444,6 +446,7 @@ impl RoundState {
         yaku
     }
 
+    /*
     fn call(&self, view: Option<usize>) {
         let view = view.unwrap_or(self.turn_player());
         let op_view = 1 - view;
@@ -534,6 +537,7 @@ impl RoundState {
             _ => {}
         }
     }
+    */
 }
 
 #[derive(serde::Deserialize)]

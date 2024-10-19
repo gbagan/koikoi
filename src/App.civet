@@ -143,7 +143,20 @@ App: Component := =>
                   }
                 />
               }
-      }
+    }
+    {state.round_state.state === 'ShowKoiKoi' &&
+      <div class="absolute z-50 top-0 left-0 w-full h-full flex items-center">
+        <div class="w-full bg-white bg-opacity-90 border-4 flex justify-center">
+            <div
+              class="text-9xl"
+              classList={
+                'text-green-500': state.round_state.acceptsKoikoi
+                'text-red-500': !state.round_state.acceptsKoikoi
+              }  
+            >Koï-Koï {state.round_state.acceptsKoikoi ? "accepté" : "refusé"}
+    }
+
+
   <dialog .dialog ref={dialog}>
 
 export default App

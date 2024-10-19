@@ -2,7 +2,7 @@ import { sum } from './util.civet'
 
 export type Phase = "Init" | "Oya" | "Oya2" | "Oya3" | "NewRound" 
                   | "Discard" | "DiscardPick" | "Draw" | "DrawPick" | "Yakus" | "KoiKoi" 
-                  | "KoiKoiShow" | "RoundOver"
+                  | "ShowKoiKoi" | "RoundOver"
 
 type CardLog = {arr: number[]}[][]
 

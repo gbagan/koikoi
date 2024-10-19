@@ -1,10 +1,10 @@
-import { Card, RoundState, pairingCards } from './model.civet'
+import { RoundState, pairingCards } from './model.civet'
 import { discard, discardPick, drawPick, claimKoikoi } from './actions.civet'
 import { randomChoice } from './util.civet' 
 
 type AI =
-  discard: (state: RoundState) => Card | null
-  pick: (state: RoundState) => Card | null
+  discard: (state: RoundState) => number | null
+  pick: (state: RoundState) => number | null
   koikoi: (state: RoundState) => boolean
 
 export randomAI: AI :=

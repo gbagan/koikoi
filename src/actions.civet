@@ -183,12 +183,17 @@ nextYaku := (state: RoundState) =>
     state.wait_action = true
 
 export claimKoikoi := (state: RoundState, isKoikoi: boolean) =>
+  state.acceptsKoikoi = isKoikoi
+  state.wait_action = false
+  state.state = 'ShowKoiKoi'
+
+afterKoikoi := (state: RoundState) =>
   player := turnPlayer(state)
   t8 := turn8(state)
-  
+  isKoikoi := state.acceptsKoikoi
   // if yakuPoints(state, player) > state.turn_point && t8 === 8
   //  isKoikoi = false
-  state.koikoi[player][t8-1] = if isKoikoi === true then 1 else 0
+  state.koikoi[player][t8-1] = if isKoikoi then 1 else 0
   //self.__write_log(is_koikoi) todo
 
   if !isKoikoi
@@ -208,7 +213,7 @@ export claimKoikoi := (state: RoundState, isKoikoi: boolean) =>
     state.wait_action = true
 
 export nextAction := (state: RoundState) =>
-  console.log state, state
+  console.log state.state
   switch state.state
     "Init"
       clearState state
@@ -226,4 +231,6 @@ export nextAction := (state: RoundState) =>
       drawPick state, null
     "Yakus"
       nextYaku state
+    "ShowKoiKoi"
+      afterKoikoi state
     else {}
