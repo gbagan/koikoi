@@ -31,15 +31,12 @@ export sum := (xs: number[]) =>
   total
 
 export intercalate = <A>(arr: A[], sep: A) =>
-  if arr.length < 2
-    arr
-  else
-    res := []
-    for i .= 0; i < arr.length; i++
-      if i > 0
-        res.push sep
-      res.push arr[i]
-    res
+  res := []
+  for i .= 0; i < arr.length; i++
+    if i > 0
+      res.push sep
+    res.push arr[i]
+  res
 
 export function randomChoice<A>(arr: A[]): A | null
   arr[Math.random() * arr.length | 0] ?? null

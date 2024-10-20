@@ -19,7 +19,6 @@ properlyShuffle := =>
     if !flag
       return cards
 
-
 export function clearState(state: GameState)
   state.hand = [[], []]
   state.pile = [[], []]
@@ -57,7 +56,7 @@ export function dealCards(state: GameState)
   writeCardLog state, 'Init' // todo
 
 export function fakeDealCards(state: GameState)
-  clearState(state)
+  clearState state
   cards: number[] .= [0...48]
   [c, ...cards2] := cards
   cards = cards2
@@ -172,12 +171,11 @@ export drawPick := (state: GameState, card: number | null) =>
   state.newYakus = yakuDifference yaku(state, player), state.turnYakus |> .map &[0]
   if state.newYakus.length > 0
     state.phase = 'Yakus'
+    state.wait_action = false
   else
     state.turn_16 += 1
     state.phase = 'Discard'
     state.wait_action = true
-    //state.wait_action = yakuPoints(state, player) > state.turn_point && turn_8(state) < 8
-
 
 nextYaku := (state: GameState) =>
   state.newYakus.splice(0, 1)
@@ -216,16 +214,20 @@ afterKoikoi := (state: GameState) =>
     state.wait_action = true
 
 export newRound := (state: GameState) =>
-  if state.winner !== null
-    p := yakuPoints(state, state.winner)
-    if state.winner === 0
+  winner := state.winner
+
+  if winner !== null
+    p := yakuPoints(state, winner)
+    if winner === 0
       state.points[0] += p
       state.points[1] -= p
     else
       state.points[0] -= p
       state.points[1] += p
-
+  
   clearState state
+  state.dealer = winner ?? 0 // todo
+
   state.stock = properlyShuffle()
   state.round += 1
   state.phase = 'DealCards'

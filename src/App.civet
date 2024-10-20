@@ -77,7 +77,6 @@ App: Component := =>
           setState produce (state) =>
             discardPick state, card
       "DrawPick"
-        console.log "drawPick", card
         if state.show !== null && state.fieldSlots.includes(card) && sameMonth(state.show, card)
           setState produce (state) =>
             drawPick state, card

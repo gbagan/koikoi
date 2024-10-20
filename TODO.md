@@ -5,3 +5,4 @@
 [x] Shuffle the cards properly after the Oya phase
 [ ] Check draw pick, it seems there is a bug
 [ ] Count the sake as a dross card 
+[x] Bug on displaying the crane (card 0)

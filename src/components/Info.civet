@@ -28,6 +28,14 @@ YAKU_NAME: Record<string, string> :=
   red: "Rubans à poésie rouges"
   blue: "Rubans à poésie bleus"
 
+SPECIAL_CARDS: Record<string, Message[]> :=
+  0: ["La ", emph("grue"), ". "]
+  8: ["Le ", emph("rideau"), ". "]
+  28: ["La ", emph("Lune"), ". "]
+  32: ["La ", emph("coupe de saké"), ". "]
+  40: ["L'", emph("homme au parapluie"), ". "]
+  44: ["Le ", emph("phénix"), ". "]
+
 const Info: InfoComponent = (props) =>  
   message := createMemo =>
     if props.hoveredCard !== null && ["hand1", "field", "pile1"].includes(props.hoveredCard.type)
@@ -35,7 +43,8 @@ const Info: InfoComponent = (props) =>
       yakus := cardYakus(props.hoveredCard.card)
       [yaku, amount] := yakus[0]
       name := YAKU_NAME[yaku]
-      text: Message[] .= ["C'est une carte ", emph(name), ". Collectionne en ", emph(""+amount), " pour former un yaku."]
+      text: Message[] .= SPECIAL_CARDS[props.hoveredCard.card] ?? [] 
+      text ++= ["C'est une carte ", emph(name), ". Collectionne en ", emph(""+amount), " pour former un yaku."]
       if yakus.length > 1
         text ++ [" Tu peux également former "] ++ intercalate(yakus[1..].map(([yaku]) => emph(YAKU_NAME[yaku]) as Message), ", ")
       else
