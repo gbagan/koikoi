@@ -175,7 +175,7 @@ cardInterLen := (xs: number[], ys: number[]) =>
 cardSubset := (xs: number[], ys: number[]) =>
   xs.every (c) => ys.includes(c)
 
-koikoiNum := (state: GameState, player: 0 | 1) =>
+export koikoiNum := (state: GameState, player: 0 | 1) =>
   state.koikoi[player] |> sum
 
 export function yaku(state: GameState, player: 0 | 1): [number, number][]
@@ -251,6 +251,25 @@ export YAKU_TEXT: string[] := [
   "Tan (タン)" // 13
   "Kasu (カス)" // 14
 ]
+
+export FRENCH_YAKU_TEXT: string[] := [
+  "5 cartes Lumière"  // 0
+  "4 cartes Lumière sans l'homme au parapluie" // 1
+  "4 cartes Lumière avec l'homme au parapluie" // 2
+  "3 cartes Lumière sans l'homme au parapluie" // 3
+  "Sanglier-Cerf-Papillon" // 4
+  "Contemplation de la fleur de cerisier" // 5 
+  "Contemplation de la fleur de cerisier" // 6
+  "Contemplation de la lune" // 7
+  "Contemplation de la lune" // 8
+  "Cartes Animaux" // 9
+  "Rubans à poésie rouges et bleus" // 10
+  "Rubans à poésie rouges" // 11
+  "Rubans à poésie bleus" // 12
+  "Rubans" // 13
+  "Plaines" // 14
+]
+
 
 export YAKU_CARDS: number[][] := [
   LIGHT  // 0

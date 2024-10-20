@@ -13,6 +13,8 @@ type BoardComponent = Component<{
   oyaCards: number[]
   hoveredCard: CardInfo | null
   pairingHand: number[]
+  points: [number, number]
+  turnPlayer: 0 | 1
   setHoveredCard: (c: CardInfo | null) =>
   pickCard: (card: number) =>
 }>
@@ -117,6 +119,16 @@ Board: BoardComponent := (props) =>
           Animaux: {props.pile2.seed.length}<br/>
           Rubans: {props.pile2.ribbon.length}<br/>
           Plaines: {props.pile2.dross.length}
+        <div
+          class="absolute text-white text-6xl p-4 left-3 top-[30rem] border-green-500 rounded-xl"
+          classList={"border-4": props.turnPlayer === 0}
+        >
+          {props.points[0]}
+        <div
+          class="absolute text-white text-6xl p-4 left-3 top-[14rem] border-green-500 rounded-xl"
+          classList={"border-4": props.turnPlayer === 1}
+        >
+          {props.points[1]}
     }
     <Index each={allCards()}>
       {(card) =>

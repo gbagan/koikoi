@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core"
 import { Component, createMemo, createSignal } from 'solid-js'
 import { createStore, produce } from "solid-js/store"
 import { LIGHT, SEED, RIBBON, DROSS, SAKE,
-        CardInfo, cardInter, field, sameMonth, initGameState, yaku, yakuPoints,
+        CardInfo, cardInter, field, sameMonth, initGameState, yaku, yakuPoints, koikoiNum,
         pairingCards, YAKU_TEXT, YAKU_CARDS,
         turnPlayer } from './model.civet'
 import { clearState, selectOyaCard, discard, discardPick, drawPick, claimKoikoi, nextAction, fakeDealCards, newRound as _newRound } from './actions.civet'
@@ -121,22 +121,25 @@ App: Component := =>
     {if state.phase === 'RoundOver' then
       <RoundOver
         yakus=yaku(state, turnPlayer(state))
+        koikoiNum={koikoiNum(state, turnPlayer(state))}
         total=yakuPoints(state, turnPlayer(state))
         newRound=newRound
       />
     else   
       <Board
-        phase={state.phase}
-        hand1={state.hand[0]}
-        hand2={state.hand[1]}
-        field={state.fieldSlots}
-        draw={state.stock}
-        show={state.show}
-        pile1={pileByFamily()[0]}
-        pile2={pileByFamily()[1]}
-        oyaCards={state.oyaCards}
+        phase=state.phase
+        hand1=state.hand[0]
+        hand2=state.hand[1]
+        field=state.fieldSlots
+        draw=state.stock
+        show=state.show
+        pile1=pileByFamily()[0]
+        pile2=pileByFamily()[1]
+        points=state.points
+        oyaCards=state.oyaCards
+        turnPlayer=turnPlayer(state)
         hoveredCard=hoveredCard()
-        pairingHand={pairingHand()}
+        pairingHand=pairingHand()
         pickCard=pickCard
         setHoveredCard=setHoveredCard
       />

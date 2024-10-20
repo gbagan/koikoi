@@ -1,13 +1,15 @@
 import { Component } from "solid-js"
-import { YAKU_TEXT } from "../model.civet"
+import { YAKU_TEXT, FRENCH_YAKU_TEXT } from "../model.civet"
 
 type RoundOverComponent = Component<{
   yakus: [number, number][]
+  koikoiNum: number
   total: number
   newRound: =>
 }>
 
-// todo
+KOIKOI_COEFF := ["+0", "+1", "+2", "+3", "x2", "x3"]
+
 const RoundOver: RoundOverComponent = (props) =>
   <div class="bg-board bg-opacity-90 rounded-lg border-1">
     <div .dialog-title.text-white>Fin de la manche
@@ -16,15 +18,18 @@ const RoundOver: RoundOverComponent = (props) =>
         <tbody class="[&>*:nth-child(odd)]:bg-white [&>*:nth-child(even)]:bg-gray-400">
           {props.yakus.map [idx, points] =>
             <tr>
-              <td class="border">{YAKU_TEXT[idx]}
-              <td class="border">{points} points
+              <td class="border p-2">{YAKU_TEXT[idx]}
+              <td class="border p-2">{FRENCH_YAKU_TEXT[idx]}
+              <td class="border p-2">{points} points
           }
           <tr>
-            <td class="border">Koi-Koi
-            <td class="border">+0
+            <td class="border p-2">Koi-Koi
+            <td class="border p-2">{props.koikoiNum}
+            <td class="border p-2">{KOIKOI_COEFF[props.koikoiNum]}
           <tr>
-            <td class="border font-bold">Total
-            <td class="border font-bold">{props.total} points
+            <td class="border p-2 font-bold">Total
+            <td class="border p-2 font-bold">
+            <td class="border p-2 font-bold">{props.total} points
 
     <div .dialog-buttons>
       <button .btn onClick=props.newRound>Nouvelle manche
