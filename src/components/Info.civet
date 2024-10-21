@@ -1,6 +1,6 @@
 import { Component, For, createMemo } from "solid-js"
 import { Transition } from "solid-transition-group"
-import { Phase, CardInfo, cardYakus } from "../model.civet"
+import { Phase, CardInfo, cardYakus, CRANE, CURTAIN, MOON, PHOENIX, SAKE } from "../model.civet"
 import { intercalate } from "../util.civet"
 import { Blue } from "./Emph.civet"
 
@@ -29,22 +29,25 @@ YAKU_NAME: Record<string, string> :=
   blue: "Rubans à poésie bleus"
 
 SPECIAL_CARDS: Record<string, Message[]> :=
-  0: ["La ", emph("grue"), ". "]
-  8: ["Le ", emph("rideau"), ". "]
-  28: ["La ", emph("Lune"), ". "]
-  32: ["La ", emph("coupe de saké"), ". "]
-  40: ["L'", emph("homme au parapluie"), ". "]
-  44: ["Le ", emph("phénix"), ". "]
+  [CRANE]: ["La ", emph("grue"), ". "]
+  [CURTAIN]: ["Le ", emph("rideau"), ". "]
+  [MOON]: ["La ", emph("Lune"), ". "]
+  [SAKE]: ["La ", emph("coupe de saké"), ". "]
+  [PHOENIX]: ["L'", emph("homme au parapluie"), ". "]
+  [SAKE]: ["Le ", emph("phénix"), ". "]
 
 const Info: InfoComponent = (props) =>  
   message := createMemo =>
-    if props.hoveredCard !== null && ["hand1", "field", "pile1"].includes(props.hoveredCard.type)
+    if props.hoveredCard !== null && ["hand1", "field", "pile1", "pile2"].includes(props.hoveredCard.type)
     then
-      yakus := cardYakus(props.hoveredCard.card)
+      card := props.hoveredCard.card
+      yakus := cardYakus card
       [yaku, amount] := yakus[0]
       name := YAKU_NAME[yaku]
-      text: Message[] .= SPECIAL_CARDS[props.hoveredCard.card] ?? [] 
+      text: Message[] .= SPECIAL_CARDS[card] ?? []
       text = text ++ ["C'est une carte ", emph(name), ". Collectionne en ", emph(""+amount), " pour former un yaku."]
+      if card === SAKE
+        text = text ++ [" C'est aussi une carte ", emph("Plaine"), "."]
       if yakus.length > 1
         text ++ [" Tu peux également former "] ++ intercalate(yakus[1..].map(([yaku]) => emph(YAKU_NAME[yaku]) as Message), ", ")
       else

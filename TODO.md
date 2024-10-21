@@ -6,3 +6,4 @@
 [x] Check draw pick, it seems there is a bug
 [ ] Count the sake as a dross card 
 [x] Bug on displaying the crane (card 0)
+[x] Can hover over the adversary pile

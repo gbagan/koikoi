@@ -49,25 +49,11 @@ export type GameState =
   wait_action: boolean
   card_log: CardLog
 
-/*
-export type GameState =
-  round_total: number
-  init_points: [number, number]
-  init_dealer: 0 | 1 | null
-  //player_names: [string, string]
-  round_state: RoundState
-  //round: number
-  //points: [number, number]
-  game_over: boolean
-  //winner: 0 | 1 | null
-*/
-
-
-// CRANE := 0
-// CURTAIN = 8
-// MOON = 28
-RAIN_MAN := 40
-// PHOENIX = 44
+export CRANE := 0
+export CURTAIN := 8
+export MOON := 28
+export RAIN_MAN := 40
+export PHOENIX := 44
 export SAKE = 32
     
 export LIGHT := [0, 8, 28, 40, 44]

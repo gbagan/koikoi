@@ -1,5 +1,5 @@
 import { Component, createMemo, Index } from "solid-js"
-import { CardInfo, cardInfo, sameMonth, Phase } from "../model.civet"
+import { CardInfo, cardInfo, sameMonth, Phase, SAKE } from "../model.civet"
 
 type BoardComponent = Component<{
   phase: Phase
@@ -113,12 +113,12 @@ Board: BoardComponent := (props) =>
           Lumières: {props.pile1.light.length}<br/>
           Animaux: {props.pile1.seed.length}<br/>
           Rubans: {props.pile1.ribbon.length}<br/>
-          Plaines: {props.pile1.dross.length}
+          Plaines: {props.pile1.dross.length + if allCards()[SAKE].type === 'pile1' then 1 else 0}
         <div class="absolute text-white left-2 top-[7rem]">
           Lumières: {props.pile2.light.length}<br/>
           Animaux: {props.pile2.seed.length}<br/>
           Rubans: {props.pile2.ribbon.length}<br/>
-          Plaines: {props.pile2.dross.length}
+          Plaines: {props.pile2.dross.length + if allCards()[SAKE].type === 'pile2' then 1 else 0}
         <div
           class="absolute text-white text-6xl p-4 left-3 top-[30rem] border-green-500 rounded-xl"
           classList={"border-4": props.turnPlayer === 0}
@@ -133,7 +133,7 @@ Board: BoardComponent := (props) =>
     <Index each={allCards()}>
       {(card) =>
         <div 
-          class="absolute perspective-1000"
+          class="absolute perspective-1000 pointer-events-none"
           style={
             width: card().type === 'hand1' && isHoveredCard(card()) ? '15rem' :  '12rem'
             height:  card().type === 'hand1' && isHoveredCard(card()) ? '24rem' : '19.5rem'
@@ -141,7 +141,7 @@ Board: BoardComponent := (props) =>
           }
         >
           <div
-            class="relative w-full h-full transition-transform duration-1000 preserve-3d"
+            class="relative w-full h-full transition-transform duration-1000 preserve-3d pointer-events-auto"
             classList={"shadow-picked": card().type === 'hand1' && card().card === props.show}
             style={
               transform: cardTransform(card(), props.phase, card().card === props.show)
@@ -154,7 +154,7 @@ Board: BoardComponent := (props) =>
             onPointerLeave={[props.setHoveredCard, null]}
         >
             <div
-              class="absolute w-full h-full backface-hidden bg-no-cover"
+              class="absolute w-full h-full backface-hidden bg-no-repeat"
               style={
                 "background-image": `url("../cards/${(card().card / 4 | 0) + 1}-${card().card % 4 + 1}.svg`
               }
