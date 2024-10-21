@@ -160,7 +160,7 @@ App: Component := =>
                 <div
                   class="w-[10rem] h-[16rem] no-cover bg-no-repeat"
                   style={
-                    "background-image": `url("../cards/${(card / 4 | 0) + 1}-${card % 4 + 1}.svg`
+                    "background-image": `url("./cards/${(card / 4 | 0) + 1}-${card % 4 + 1}.svg`
                   }
                 />
               }

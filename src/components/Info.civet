@@ -1,6 +1,6 @@
 import { Component, For, createMemo } from "solid-js"
 import { Transition } from "solid-transition-group"
-import { Phase, CardInfo, cardYakus, CRANE, CURTAIN, MOON, PHOENIX, SAKE } from "../model.civet"
+import { Phase, CardInfo, cardYakus, CRANE, CURTAIN, MOON, RAIN_MAN, PHOENIX, SAKE } from "../model.civet"
 import { intercalate } from "../util.civet"
 import { Blue } from "./Emph.civet"
 
@@ -33,8 +33,8 @@ SPECIAL_CARDS: Record<string, Message[]> :=
   [CURTAIN]: ["Le ", emph("rideau"), ". "]
   [MOON]: ["La ", emph("Lune"), ". "]
   [SAKE]: ["La ", emph("coupe de saké"), ". "]
-  [PHOENIX]: ["L'", emph("homme au parapluie"), ". "]
-  [SAKE]: ["Le ", emph("phénix"), ". "]
+  [RAIN_MAN]: ["L'", emph("homme au parapluie"), ". "]
+  [PHOENIX]: ["Le ", emph("phénix"), ". "]
 
 const Info: InfoComponent = (props) =>  
   message := createMemo =>
