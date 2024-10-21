@@ -11,11 +11,11 @@ type RoundOverComponent = Component<{
 KOIKOI_COEFF := ["+0", "+1", "+2", "+3", "x2", "x3"]
 
 const RoundOver: RoundOverComponent = (props) =>
-  <div class="bg-board bg-opacity-90 rounded-lg border-1">
+  <div class="z-20 bg-board bg-opacity-90 rounded-xl border-2 border-black">
     <div .dialog-title.text-white>Fin de la manche
     <div .dialog-body>
       <table>
-        <tbody class="[&>*:nth-child(odd)]:bg-white [&>*:nth-child(even)]:bg-gray-400">
+        <tbody class="[&>*:nth-child(odd)]:bg-white [&>*:nth-child(even)]:bg-gray-200">
           {props.yakus.map [idx, points] =>
             <tr>
               <td class="border p-2">{YAKU_TEXT[idx]}

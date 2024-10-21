@@ -44,7 +44,7 @@ const Info: InfoComponent = (props) =>
       [yaku, amount] := yakus[0]
       name := YAKU_NAME[yaku]
       text: Message[] .= SPECIAL_CARDS[props.hoveredCard.card] ?? [] 
-      text ++= ["C'est une carte ", emph(name), ". Collectionne en ", emph(""+amount), " pour former un yaku."]
+      text = text ++ ["C'est une carte ", emph(name), ". Collectionne en ", emph(""+amount), " pour former un yaku."]
       if yakus.length > 1
         text ++ [" Tu peux également former "] ++ intercalate(yakus[1..].map(([yaku]) => emph(YAKU_NAME[yaku]) as Message), ", ")
       else

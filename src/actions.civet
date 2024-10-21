@@ -1,6 +1,5 @@
 import { GameState, field, Phase, sameMonth, pairingCards, turnPlayer, turn8, yaku, yakuPoints } from './model.civet'
-import shuffle from 'lodash.shuffle'
-import { countIf, last, replicate } from './util.civet'
+import { countIf, last, replicate, shuffle } from './util.civet'
 
 function yakuDifference(ys1: [number, number][], ys2: [number, number][])
   ys1.filter (y1) => ys2.every((y2) => y1[0] !== y2[0] || y1[1] !== y2[1])
