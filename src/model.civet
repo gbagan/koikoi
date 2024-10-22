@@ -11,10 +11,10 @@ type CardType = 'hand1' | 'hand2' | 'field' | 'draw' | 'pile1' | 'pile2' | 'oya'
 export type CardInfo = 
   card: number
   type: CardType
-  idx: number
+  position: number
 
-export function cardInfo (card: number, type: CardType, idx: number): CardInfo
-  {card, type, idx}
+export function cardInfo (card: number, type: CardType, position: number): CardInfo
+  {card, type, position}
 
 export type GameState =
   round: number
@@ -70,9 +70,6 @@ RED_RIBBON: number[] := [1,5,9]
 BLUE_RIBBON: number[] := [21,33,37]
 RED_BLUE_RIBBON: number[] := RED_RIBBON ++ BLUE_RIBBON
 
-
-//export cardEq := (c1: Card, c2: Card) => c1[0] === c2[0] && c1[1] === c2[1]
-
 export function sortCards(cards: number[]): number[]
   cards.sort (c1, c2) => c1 - c2
   cards
@@ -126,7 +123,6 @@ export function initGameState(): GameState
     wait_action: false
     animation: false
     card_log: []
-  //writeCardLog state, 'Init'
   state
 
 export function field(state: GameState): number[]
@@ -213,7 +209,7 @@ export function yaku(state: GameState, player: 0 | 1): [number, number][]
   /*          
   if koikoi > 0
     total.push [15, koikoi]
-  */  
+  */
 
   total
 

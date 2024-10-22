@@ -28,19 +28,19 @@ type Pile =
 cardTransform := (card: CardInfo, phase: Phase, show: boolean) =>
   translate := switch card.type
     when 'hand1'
-      `translate(${10 + card.idx * 5}rem, 40rem)`
+      `translate(${10 + card.position * 5}rem, 40rem)`
     when 'hand2'
-      `translate(${10 + card.idx * 5}rem, 10rem)`
+      `translate(${10 + card.position * 5}rem, 10rem)`
     when "field"
-      `translate(${10 + (card.idx / 2 | 0) * 5}rem, ${21 + 8 * (card.idx % 2)}rem)`
+      `translate(${10 + (card.position / 2 | 0) * 5}rem, ${21 + 8 * (card.position % 2)}rem)`
     when "draw"
       "translate(3rem, 25rem)"
     when "pile1"
-      `translate(${1.5 + card.idx * 2}rem, 46rem)`
+      `translate(${1.5 + card.position * 2}rem, 46rem)`
     when "pile2"
-      `translate(${1.5 + card.idx * 2}rem, 4rem)`
+      `translate(${1.5 + card.position * 2}rem, 4rem)`
     when "oya"
-      `translate(${15 + 20 * card.idx}rem, 25rem)`
+      `translate(${15 + 20 * card.position}rem, 25rem)`
 
   rotate := if phase === 'Oya2' || (card.type === 'draw' || card.type === 'hand2') && !show then "rotateY(180deg)" else "rotateY(0)"
   scale :=
@@ -52,8 +52,8 @@ cardTransform := (card: CardInfo, phase: Phase, show: boolean) =>
   `${translate} ${rotate} ${scale}`   
 
 Board: BoardComponent := (props) =>
-  isHoveredCard := (card: CardInfo) =>
-    props.hoveredCard !== null && props.hoveredCard.card === card.card
+  isHoveredCard := (card: number) =>
+    props.hoveredCard !== null && props.hoveredCard.card === card
   
   isGray := (card: CardInfo) =>
     switch card.type
@@ -74,9 +74,9 @@ Board: BoardComponent := (props) =>
     switch card.type
       'draw'
         if card.card === props.show then 35 else 30
-      'hand1' 40 + card.idx
-      'hand2' 40 + card.idx
-      'field' 50 + card.idx
+      'hand1' 40 + card.position
+      'hand2' 40 + card.position
+      'field' 50 + card.position
       else 70
 
   pileCards := (n: 0 | 1) =>
@@ -131,37 +131,37 @@ Board: BoardComponent := (props) =>
           {props.points[1]}
     }
     <Index each={allCards()}>
-      {(card) =>
+      {(card, idx) =>
         <div 
           class="absolute perspective-1000 pointer-events-none"
           style={
-            width: card().type === 'hand1' && isHoveredCard(card()) ? '15rem' :  '12rem'
-            height:  card().type === 'hand1' && isHoveredCard(card()) ? '24rem' : '19.5rem'
+            width: card().type === 'hand1' && isHoveredCard(idx) ? '15rem' :  '12rem'
+            height:  card().type === 'hand1' && isHoveredCard(idx) ? '24rem' : '19.5rem'
             'z-index': cardZIndex card()
           }
         >
           <div
             class="relative w-full h-full transition-transform duration-1000 preserve-3d pointer-events-auto"
-            classList={"shadow-picked": card().type === 'hand1' && card().card === props.show}
+            classList={"shadow-picked": card().type === 'hand1' && idx === props.show}
             style={
-              transform: cardTransform(card(), props.phase, card().card === props.show)
+              transform: cardTransform(card(), props.phase, idx === props.show)
               top: "-50%"
               left: "-50%"
               filter: isGray(card()) ? "grayscale(100%)" : ""
             }
-            onClick=[props.pickCard, card().card]
+            onClick=[props.pickCard, idx]
             onPointerEnter={[props.setHoveredCard, card()]}
             onPointerLeave={[props.setHoveredCard, null]}
-        >
+          >
             <div
               class="absolute w-full h-full backface-hidden bg-no-repeat"
               style={
-                "background-image": `url("./cards/${(card().card / 4 | 0) + 1}-${card().card % 4 + 1}.svg`
+                "background-image": `url("./cards/${(idx / 4 | 0) + 1}-${idx % 4 + 1}.svg`
               }
             />
             <div
               class="absolute w-full h-full backface-hidden bg-backface"
-              classList={"hover:animate-oya-card": props.phase === 'Oya2'}
+              classList={"hover:animate-oya-card": props.phase === 'Oya2' && card().type === 'oya'}
               style={transform: "rotateY(180deg)"}
             />
       }
