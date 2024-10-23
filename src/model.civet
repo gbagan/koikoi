@@ -71,8 +71,7 @@ BLUE_RIBBON: number[] := [21,33,37]
 RED_BLUE_RIBBON: number[] := RED_RIBBON ++ BLUE_RIBBON
 
 export function sortCards(cards: number[]): number[]
-  cards.sort (c1, c2) => c1 - c2
-  cards
+  cards.toSorted (c1, c2) => c1 - c2
 
 export cardYakus := (card: number) =>
   mainYaku :=

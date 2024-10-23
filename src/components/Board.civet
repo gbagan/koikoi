@@ -1,4 +1,4 @@
-import { Component, createMemo, Index } from "solid-js"
+import { Component, createMemo, Index, Show } from "solid-js"
 import { CardInfo, cardInfo, sameMonth, Phase, SAKE } from "../model.civet"
 
 type BoardComponent = Component<{
@@ -91,45 +91,39 @@ Board: BoardComponent := (props) =>
     output
 
   allCards := createMemo =>
-    hand1 := props.hand1.map (card, i) => cardInfo(card, 'hand1', i) as CardInfo
-    hand2 := props.hand2.map (card, i) => cardInfo(card, 'hand2', i) as CardInfo
+    hand1 := props.hand1.map (card, i) => cardInfo(card, 'hand1', i)
+    hand2 := props.hand2.map (card, i) => cardInfo(card, 'hand2', i)
     field := props.field
       |> .map (card, i) => [i, card]
       |> .filter [, card] => card !== null      
-      |> .map [i, card] => cardInfo(card as number, 'field', i as number) as CardInfo
-    draw := props.draw.map (card) => cardInfo(card, 'draw', 0) as CardInfo
+      |> .map [i, card] => cardInfo(card as number, 'field', i as number)
+    draw := props.draw.map (card) => cardInfo(card, 'draw', 0)
     pile1 := pileCards(0)
     pile2 := pileCards(1)
-    oyaCards := props.oyaCards.map (card, i) => cardInfo(card, 'oya', i) as CardInfo
-    //show := props.show.map (card, i) => cardInfo(card, 'show', i) as CardInfo
-    cards := hand1 ++ hand2 ++ field ++ draw ++ pile1 ++ pile2 ++ oyaCards
-    cards.sort((c1, c2) => c1.card - c2.card)
-    cards
+    oyaCards := props.oyaCards.map (card, i) => cardInfo(card, 'oya', i)
+    hand1 ++ hand2 ++ field ++ draw ++ pile1 ++ pile2 ++ oyaCards 
+      |> .toSorted (c1, c2) => c1.card - c2.card
 
   <div class="z-20 h-[50vw] w-[50vw] bg-board bg-opacity-90 relative">
-    {!['Init', 'Oya', 'Oya2', 'Oya3'].includes(props.phase) &&
-      <>
-        <div class="absolute text-white left-2 top-[37rem]">
-          Lumières: {props.pile1.light.length}<br/>
-          Animaux: {props.pile1.seed.length}<br/>
-          Rubans: {props.pile1.ribbon.length}<br/>
-          Plaines: {props.pile1.dross.length + if allCards()[SAKE].type === 'pile1' then 1 else 0}
-        <div class="absolute text-white left-2 top-[7rem]">
-          Lumières: {props.pile2.light.length}<br/>
-          Animaux: {props.pile2.seed.length}<br/>
-          Rubans: {props.pile2.ribbon.length}<br/>
-          Plaines: {props.pile2.dross.length + if allCards()[SAKE].type === 'pile2' then 1 else 0}
-        <div
-          class="absolute text-white text-6xl p-4 left-3 top-[30rem] border-green-500 rounded-xl"
-          classList={"border-4": props.turnPlayer === 0}
-        >
-          {props.points[0]}
-        <div
-          class="absolute text-white text-6xl p-4 left-3 top-[14rem] border-green-500 rounded-xl"
-          classList={"border-4": props.turnPlayer === 1}
-        >
-          {props.points[1]}
-    }
+    <Show when=!['Init', 'Oya', 'Oya2', 'Oya3'].includes(props.phase)>
+      <div class="absolute text-white left-2 top-[37rem]">
+        Lumières: {props.pile1.light.length}<br/>
+        Animaux: {props.pile1.seed.length}<br/>
+        Rubans: {props.pile1.ribbon.length}<br/>
+        Plaines: {props.pile1.dross.length + if allCards()[SAKE].type === 'pile1' then 1 else 0}
+      <div class="absolute text-white left-2 top-[7rem]">
+        Lumières: {props.pile2.light.length}<br/>
+        Animaux: {props.pile2.seed.length}<br/>
+        Rubans: {props.pile2.ribbon.length}<br/>
+        Plaines: {props.pile2.dross.length + if allCards()[SAKE].type === 'pile2' then 1 else 0}
+      <div
+        class="absolute text-white text-6xl p-4 left-3 top-[30rem] border-green-500 rounded-xl"
+        classList={"border-4": props.turnPlayer === 0}
+      > {props.points[0]}
+      <div
+        class="absolute text-white text-6xl p-4 left-3 top-[14rem] border-green-500 rounded-xl"
+        classList={"border-4": props.turnPlayer === 1}
+      > {props.points[1]}
     <Index each={allCards()}>
       {(card, idx) =>
         <div 

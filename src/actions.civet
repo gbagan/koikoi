@@ -42,10 +42,8 @@ export function clearState(state: GameState)
   return
 
 export function dealCards(state: GameState)
-  hand1 := state.stock[0...8]
-    //hand1.sort_unstable()
-  hand2 := state.stock[8...16]
-    //hand2.sort_unstable();
+  hand1 := state.stock[0...8].toSorted (a, b) => a - b
+  hand2 := state.stock[8...16].toSorted (a, b) => a - b
   state.hand = [hand1, hand2]
   state.fieldSlots = state.stock[16...24] ++ replicate(8, null) as any
   state.stock = state.stock[24..]

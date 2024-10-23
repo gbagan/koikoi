@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core"
-import { Component, createMemo, createSignal } from 'solid-js'
+import { Component, createMemo, createSignal, Show } from 'solid-js'
 import { createStore, produce } from "solid-js/store"
 import { LIGHT, SEED, RIBBON, DROSS, SAKE,
         CardInfo, cardInter, field, sameMonth, initGameState, yaku, yakuPoints, koikoiNum,
@@ -150,7 +150,7 @@ App: Component := =>
       wait_action=state.wait_action
       hoveredCard=hoveredCard()
     >
-    {newYakus() !== null &&
+    <Show when={newYakus() !== null}>
       <div class="absolute z-50 top-0 left-0 w-full h-full flex items-center">
         <div class="w-full bg-white bg-opacity-90 border-4 flex justify-center">
           <div>
@@ -164,17 +164,15 @@ App: Component := =>
                   }
                 />
               }
-    }
-    {state.phase === 'KoiKoi' && turnPlayer(state) === 0 &&
+    <Show when={state.phase === 'KoiKoi' && turnPlayer(state) === 0}>
       <div class="absolute z-50 top-0 left-0 w-full h-full flex items-center">
         <div class="w-full bg-white bg-opacity-90 border-4 flex flex-col justify-center gap-8">
           <div .text-8xl>Acceptes-tu le Koï-Koï?
           <div .flex.justify-around>
             <button .large-btn onClick=[acceptKoikoi, true]>✅ Oui
             <button .large-btn onClick=[acceptKoikoi, false]>❌ Non
-    }
 
-    {state.phase === 'ShowKoiKoi' &&
+    <Show when={state.phase === 'ShowKoiKoi'}>
       <div class="absolute z-50 top-0 left-0 w-full h-full flex items-center">
         <div class="w-full bg-white bg-opacity-90 border-4 flex justify-center">
             <div
@@ -184,7 +182,6 @@ App: Component := =>
                 'text-red-500': !state.acceptsKoikoi
               }  
             >Koï-Koï {state.acceptsKoikoi ? "accepté" : "refusé"}
-    }
 
   <dialog .dialog ref={dialog}>
 

@@ -12,6 +12,9 @@ export default defineConfig(async () => ({
     civet({ ts: "preserve" }),
     solid()
   ],
+  build: {
+    target: 'esnext'
+  },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
