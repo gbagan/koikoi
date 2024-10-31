@@ -11,7 +11,7 @@ export default {
         board: '#2d4a32',
       },
       backgroundImage: {
-        main: "url('../background.webp')",
+        main: "linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3)), url('../background.webp')",
         thinking: "url('../girl_thinking.webp')",
         happy: "url('../girl_happy.webp')",
         crying: "url('../girl_crying.webp')",

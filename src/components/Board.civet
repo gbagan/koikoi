@@ -73,11 +73,11 @@ Board: BoardComponent := (props) =>
   cardZIndex := (card: CardInfo) =>
     switch card.type
       'draw'
-        if card.card === props.show then 35 else 30
-      'hand1' 40 + card.position
-      'hand2' 40 + card.position
-      'field' 50 + card.position
-      else 70
+        if card.card === props.show then 15 else 10
+      'hand1' 20 + card.position
+      'hand2' 20 + card.position
+      'field' 30 + card.position
+      else 48
 
   pileCards := (n: 0 | 1) =>
     output: CardInfo[] := []
@@ -104,7 +104,7 @@ Board: BoardComponent := (props) =>
     hand1 ++ hand2 ++ field ++ draw ++ pile1 ++ pile2 ++ oyaCards 
       |> .toSorted (c1, c2) => c1.card - c2.card
 
-  <div class="z-20 h-[50vw] w-[50vw] bg-board bg-opacity-90 relative">
+  <div class="h-[50vw] w-[50vw] bg-board bg-opacity-90 relative">
     <Show when=!['Init', 'Oya', 'Oya2', 'Oya3'].includes(props.phase)>
       <div class="absolute text-white left-2 top-[37rem]">
         Lumières: {props.pile1.light.length}<br/>

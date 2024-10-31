@@ -11,7 +11,7 @@ type RoundOverComponent = Component<{
 KOIKOI_COEFF := ["+0", "+1", "+2", "+3", "x2", "x3"]
 
 const RoundOver: RoundOverComponent = (props) =>
-  <div class="z-20 bg-board bg-opacity-90 rounded-xl border-2 border-black">
+  <div class="bg-board bg-opacity-90 rounded-xl border-2 border-black">
     <div .dialog-title.text-white>Fin de la manche
     <div .dialog-body>
       <table>

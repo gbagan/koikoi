@@ -73,7 +73,7 @@ const Info: InfoComponent = (props) =>
     then "bg-thinking"
     else "bg-speaking"
 
-  <div class=`z-20 relative w-[15rem] h-[25rem] bg-contain bg-no-repeat ${girlExpression()}`>
+  <div class=`relative w-[15rem] h-[25rem] bg-contain bg-no-repeat ${girlExpression()}`>
     <Transition
       onEnter={(el, done) =>
         a := el.animate [{ opacity: 0 }, { opacity: 1 }], {duration: 500}
