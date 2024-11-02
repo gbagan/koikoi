@@ -1,32 +1,35 @@
-import { GameState, pairingCards } from './model.civet'
-import { discard, discardPick, drawPick, claimKoikoi } from './actions.civet'
+import { invoke } from "@tauri-apps/api/core"
+import { GameState, field, pairingCards } from './model.civet'
 import { randomChoice } from './util.civet' 
 
-type AI =
-  discard: (state: GameState) => number | null
-  pick: (state: GameState) => number | null
-  koikoi: (state: GameState) => boolean
+export type AI =
+  discard: (state: GameState) => Promise<number>
+  pick: (state: GameState) => Promise<number>
+  koikoi: (state: GameState) => Promise<boolean>
 
 export randomAI: AI :=
-  discard: (state: GameState) =>
+  discard: async (state: GameState) =>
     moves := state.hand[1].filter (c) => pairingCards(state, c).length > 0
     if moves.length > 0
-      randomChoice(moves)
+      randomChoice(moves)!
     else
-      randomChoice(state.hand[1])
-  pick: (state: GameState) =>
-    pairingCards(state, state.show!) |> randomChoice
-  koikoi: => false
+      randomChoice(state.hand[1])!
+  pick: async (state: GameState) =>
+    (pairingCards(state, state.show!) |> randomChoice)!
+  koikoi: async => false
 
 
-export aiPlays := (state: GameState, ai: AI) =>
-  switch state.phase
-    "Discard"
-      discard(state, ai.discard(state)!)
-    "DiscardPick"
-      discardPick(state, ai.pick(state))
-    "DrawPick"  
-      drawPick(state, ai.pick(state))
-    "KoiKoi"
-      claimKoikoi(state, ai.koikoi(state))
-    else {}
+export async function invokeAI(state: GameState): number
+  {show, fieldSlots, ...state2} := state
+  state3 := {
+    ...state2
+    show: show === null ? [] : [show]
+    field: field(state)
+  }
+  invoke "koikoi_ai", {gameState: state3}
+
+
+export hardAI: AI :=
+  discard: (state: GameState) => invokeAI state
+  pick: (state: GameState) => invokeAI state
+  koikoi: (state: GameState) => invokeAI(state).then(& === 1)

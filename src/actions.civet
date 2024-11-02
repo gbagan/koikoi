@@ -1,4 +1,5 @@
-import { GameState, field, Phase, sameMonth, pairingCards, turnPlayer, turn8, yaku, yakuPoints } from './model.civet'
+import { GameState, Phase, field, sameMonth, pairingCards, turnPlayer, turn8, yaku, yakuPoints,
+        cardsToMultiHot, fieldCollected } from './model.civet'
 import { countIf, last, replicate, shuffle } from './util.civet'
 
 function yakuDifference(ys1: [number, number][], ys2: [number, number][])
@@ -11,7 +12,7 @@ properlyShuffle := =>
     hand2 := cards[8...16]
     field := cards[16...24]
     flag .= false
-    for suit .= 1; suit < 13; suit++
+    for suit .= 0; suit < 12; suit++
       flag = flag || countIf(hand1, (c) => (c / 4 | 0) === suit) === 4
         || countIf(hand2, (c) => (c / 4 | 0) === suit) === 4
         || countIf(field, (c) => (c / 4 | 0) === suit) === 4
@@ -26,7 +27,8 @@ export function clearState(state: GameState)
   state.fieldSlots = []
   state.show = null
   state.oyaCards = []
-  state.collect = []
+  state.collected = []
+  state.uncollected = []
   state.turn_16 = 1
   state.dealer = 0
   state.koikoi = [[0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0]]
@@ -47,10 +49,10 @@ export function dealCards(state: GameState)
   state.hand = [hand1, hand2]
   state.fieldSlots = state.stock[16...24] ++ replicate(8, null) as any
   state.stock = state.stock[24..]
-  state.phase = "Discard"
+  state.phase = 'Discard'
   state.wait_action = true
   state.init_board = [...field(state)]
-  writeCardLog state, 'Init' // todo
+  writeCardLog state, 'DealCards' // todo
 
 export function fakeDealCards(state: GameState)
   clearState state
@@ -67,37 +69,76 @@ export function fakeDealCards(state: GameState)
   state.stock = cards[24..]
   state.dealer = 1
   state.pile = [[], []]
-  state.phase = "Discard"
+  state.phase = 'Discard'
   state.wait_action = true
   state.init_board = [...field(state)];
-  writeCardLog state, 'Init'
+  writeCardLog state, 'DealCards'
 
-function writeCardLog(state: GameState, _: Phase)
-  //turn := state.turn_16
-  state.card_log = [0...16].map () => [0...8].map () => {arr: replicate(48, 0)} 
+DISCARDED_AND_PAIRED := 0
+DISCARDED_AND_UNPAIRED := 1
+PAIRED_WITH_DISCARD_COLLECTED := 2
+PAIRED_WITH_DISCARD_UNCOLLECTED := 3
+DRAWN_AND_PAIRED := 4
+DRAWN_AND_UNPAIRED := 5
+PAIRED_WITH_DRAW_COLLECTED := 6
+PAIRED_WITH_DRAW_UNCOLLECTED := 7
 
+function writeCardLog(state: GameState, phase: Phase)
+  turn := state.turn_16
+  switch phase
+    'DealCards'
+      state.card_log = [0...16].map () => [0...8].map () => {arr: replicate(48, 0)} 
+    'Discard'
+      if pairingCards(state, state.show!).length === 0
+        state.card_log[turn][DISCARDED_AND_UNPAIRED] = {arr: cardsToMultiHot [state.show!] }
+      else
+        state.card_log[turn][DISCARDED_AND_PAIRED] = {arr: cardsToMultiHot [state.show!] }
+    'DiscardPick'
+      if state.collected.length > 0
+        collected := cardsToMultiHot fieldCollected state
+        uncollected := cardsToMultiHot state.uncollected
+        state.card_log[turn][PAIRED_WITH_DISCARD_COLLECTED] = { arr: collected }
+        state.card_log[turn][PAIRED_WITH_DISCARD_UNCOLLECTED] = { arr: uncollected }
+        // todo
+    'Draw'
+      if pairingCards(state, state.show!).length === 0
+        state.card_log[turn][DRAWN_AND_UNPAIRED] = {arr: cardsToMultiHot [state.show!] }
+      else
+        state.card_log[turn][DRAWN_AND_PAIRED] = {arr: cardsToMultiHot [state.show!] }
+    'DrawPick'
+      if state.collected.length > 0
+        collected := cardsToMultiHot fieldCollected state
+        uncollected := cardsToMultiHot state.uncollected
+        state.card_log[turn][PAIRED_WITH_DRAW_COLLECTED] = { arr: collected }
+        state.card_log[turn][PAIRED_WITH_DRAW_UNCOLLECTED] = { arr: uncollected }
+        // todo
+    else
+      {}
 
 collectCards := (state: GameState, card: number | null) =>
   turn := turnPlayer(state)
   pairing := pairingCards state, state.show!
   n := pairing.length
   if n === 0
-    state.collect = []
+    state.collected = []
+    state.uncollected = []
     index := state.fieldSlots.findIndex & === null
     if index >= 0
       state.fieldSlots[index] = state.show!
   else if n == 1 || n == 3
-    state.collect = [state.show!] ++ pairing
-    for paired_card of pairing
-      index := state.fieldSlots.findIndex (c) => c !== null && c === paired_card
+    state.collected = [state.show!] ++ pairing
+    state.uncollected = []
+    for pairedCard of pairing
+      index := state.fieldSlots.findIndex (c) => c !== null && c === pairedCard
       state.fieldSlots[index] = null
-    state.pile[turn] = state.pile[turn] ++ state.collect
+    state.pile[turn] = state.pile[turn] ++ state.collected
   else
-    state.collect = [state.show!, card!]
+    state.collected = [state.show!, card!]
+    state.uncollected = pairing.filter & !== card
     index := state.fieldSlots.indexOf card!
     if index >= 0
       state.fieldSlots[index] = null
-    state.pile[turn] = state.pile[turn] ++ state.collect
+    state.pile[turn] = state.pile[turn] ++ state.collected
 
 
 export pickOyaCards := (state: GameState) =>
@@ -141,27 +182,29 @@ export discard := (state: GameState, card: number) =>
   //self.__write_log()
   state.phase = 'DiscardPick'
   state.wait_action = pairingCards(state, card).length === 2
+  writeCardLog state, 'Discard'
 
 export discardPick := (state: GameState, card: number | null) =>
   player := turnPlayer(state)
-  if state.show !== null
+  if state.show !== null // todo: peut être réécrit avec un filter
     ind := state.hand[player].indexOf state.show
     state.hand[player].splice(ind, 1)
   collectCards state, card
   state.show = null
   state.phase = 'Draw'
   state.wait_action = false
+  writeCardLog state, 'DiscardPick'
 
 draw := (state: GameState) =>
   state.show = last(state.stock)!
   // state.show = [state.stock.pop()!] // todo
   state.phase = 'DrawPick'
   state.wait_action = pairingCards(state, state.show).length === 2
+  writeCardLog state, 'Draw'
 
 export drawPick := (state: GameState, card: number | null) =>
   state.stock.pop()
   collectCards state, card
-  //self.__write_log() todo
   state.show = null
   player := turnPlayer(state)
   
@@ -173,6 +216,7 @@ export drawPick := (state: GameState, card: number | null) =>
     state.turn_16 += 1
     state.phase = 'Discard'
     state.wait_action = true
+  writeCardLog state, 'DrawPick'
 
 nextYaku := (state: GameState) =>
   state.newYakus.splice(0, 1)
@@ -186,8 +230,8 @@ export claimKoikoi := (state: GameState, isKoikoi: boolean) =>
   state.phase = 'ShowKoiKoi'
 
 afterKoikoi := (state: GameState) =>
-  player := turnPlayer(state)
-  t8 := turn8(state)
+  player := turnPlayer state
+  t8 := turn8 state
   koikoi := state.acceptsKoikoi
   // if yakuPoints(state, player) > state.turn_point && t8 === 8
   //  isKoikoi = false
@@ -230,7 +274,6 @@ export newRound := (state: GameState) =>
   state.phase = 'DealCards'
 
 export nextAction := (state: GameState) =>
-  console.log state.phase
   switch state.phase
     "Init"
       clearState state

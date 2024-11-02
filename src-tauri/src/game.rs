@@ -7,13 +7,13 @@ pub type Card = usize;
 #[derive(PartialEq, Eq, Debug, serde::Deserialize)]
 
 pub enum Phase {
-    Init,
+    //Init,
     Discard,
     DiscardPick,
-    Draw,
+    //Draw,
     DrawPick,
     KoiKoi,
-    RoundOver,
+    //RoundOver,
 }
 
 const DEFAULT_ROUND_TOTAL: u32 = 8;
@@ -79,7 +79,7 @@ pub struct GameState {
     pub init_board: Vec<Card>,
 
     pub show: Vec<Card>,
-    pub collect: Vec<Card>,
+    pub collected: Vec<Card>,
     
     pub turn_16: usize,
     pub dealer: usize,
@@ -178,8 +178,9 @@ impl GameState {
         self.field.iter().filter(|&&c| c/4 == self.show[0] / 4).copied().collect()
     }
 
+    /*
     fn field_collect(&self) -> Vec<Card> {
-        self.collect
+        self.collected
             .iter()
             .filter(|&&c| c != self.show[0])
             .copied()
@@ -197,6 +198,7 @@ impl GameState {
             if player == 1 {Some(self.yaku_points(1))} else {Some(-self.yaku_points(1))}    
         }
     }
+    */
 
     pub fn koikoi_num(&self, player: usize) -> i32 {
         self.koikoi[player].iter().sum()

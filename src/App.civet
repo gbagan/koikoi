@@ -7,7 +7,7 @@ import { LIGHT, SEED, RIBBON, DROSS, SAKE,
         turnPlayer } from './model.civet'
 import { clearState, selectOyaCard, discard, discardPick, drawPick, claimKoikoi, nextAction, fakeDealCards, newRound as _newRound } from './actions.civet'
 import { delay } from './util.civet'
-import { aiPlays, randomAI } from './ai.civet'
+import { AI, randomAI } from './ai.civet'
 import Board from './components/Board.civet'
 import Info from './components/Info.civet'
 import RoundOver from './components/RoundOver.civet'
@@ -16,7 +16,7 @@ App: Component := =>
   let dialog!: HTMLDialogElement
 
   [state, setState] := createStore initGameState()
-  [hoveredCard, setHoveredCard] := createSignal<CardInfo | null>(null)
+  [hoveredCard, setHoveredCard] := createSignal<CardInfo | null> null
 
   newYakus := createMemo =>
     if state.phase != 'Yakus'
@@ -92,6 +92,26 @@ App: Component := =>
       _newRound state
     continueGame()
 
+  aiPlays := async (ai: AI) =>
+    switch state.phase
+      "Discard"
+        card := await ai.discard(state)
+        setState produce (state) =>
+          discard state, card
+      "DiscardPick"
+        card := await ai.pick(state)
+        setState produce (state) =>
+          discardPick state, card
+      "DrawPick"
+        card := await ai.pick(state)
+        setState produce (state) =>
+          drawPick state, card
+      "KoiKoi"
+        choice := await ai.koikoi(state)
+        setState produce (state) =>
+          claimKoikoi state, choice
+
+
   continueGame := async =>
     setState "animation", true
     loop
@@ -103,8 +123,7 @@ App: Component := =>
         setState produce (state) =>
           nextAction state
       else if turnPlayer(state) === 1
-        setState produce (state) =>
-          aiPlays state, randomAI
+        aiPlays randomAI
       else
         setState "animation", false
         break
@@ -182,6 +201,6 @@ App: Component := =>
               }
             >Koï-Koï {state.acceptsKoikoi ? "accepté" : "refusé"}
 
-  <dialog .dialog ref={dialog}>
+  <dialog .dialog ref=dialog>
 
 export default App

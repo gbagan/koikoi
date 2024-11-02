@@ -1,4 +1,4 @@
-import { sum } from './util.civet'
+import { replicate, sum } from './util.civet'
 
 export type Phase = "Init" | "Oya" | "Oya2" | "Oya3" | "DealCards" 
                   | "Discard" | "DiscardPick" | "Draw" | "DrawPick" | "Yakus" | "KoiKoi" 
@@ -29,7 +29,8 @@ export type GameState =
   init_board: number[]
 
   show: number | null
-  collect: number[]
+  collected: number[]
+  uncollected: number[]
     
   turn_16: number
   dealer: 0 | 1
@@ -108,7 +109,8 @@ export function initGameState(): GameState
     fieldSlots: []
     oyaCards: []
     show: null
-    collect: []
+    collected: []
+    uncollected: []
     turn_16: 1
     dealer: 0
     koikoi: [[0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0]]
@@ -278,3 +280,13 @@ export yakuPoints := (state: GameState, player: 0 | 1) =>
     points + koikoi
   else
     points * (koikoi - 2)  
+
+
+export cardsToMultiHot := (cardList: number[]) =>
+  multiHot := replicate(48, 0)
+  for c of cardList
+    multiHot[c] = 1
+  multiHot
+
+export fieldCollected := (state: GameState) =>
+  state.collected.filter(& !== state.show)
