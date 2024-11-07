@@ -83,8 +83,8 @@ DRAWN_AND_UNPAIRED := 5
 PAIRED_WITH_DRAW_COLLECTED := 6
 PAIRED_WITH_DRAW_UNCOLLECTED := 7
 
-function writeCardLog(state: GameState, phase: Phase)
-  turn := state.turn_16
+writeCardLog := (state: GameState, phase: Phase) =>
+  turn := state.turn_16 - 1
   switch phase
     'DealCards'
       state.card_log = [0...16].map () => [0...8].map () => {arr: replicate(48, 0)} 
@@ -99,7 +99,6 @@ function writeCardLog(state: GameState, phase: Phase)
         uncollected := cardsToMultiHot state.uncollected
         state.card_log[turn][PAIRED_WITH_DISCARD_COLLECTED] = { arr: collected }
         state.card_log[turn][PAIRED_WITH_DISCARD_UNCOLLECTED] = { arr: uncollected }
-        // todo
     'Draw'
       if pairingCards(state, state.show!).length === 0
         state.card_log[turn][DRAWN_AND_UNPAIRED] = {arr: cardsToMultiHot [state.show!] }
@@ -111,9 +110,6 @@ function writeCardLog(state: GameState, phase: Phase)
         uncollected := cardsToMultiHot state.uncollected
         state.card_log[turn][PAIRED_WITH_DRAW_COLLECTED] = { arr: collected }
         state.card_log[turn][PAIRED_WITH_DRAW_UNCOLLECTED] = { arr: uncollected }
-        // todo
-    else
-      {}
 
 collectCards := (state: GameState, card: number | null) =>
   turn := turnPlayer(state)
@@ -185,7 +181,7 @@ export discard := (state: GameState, card: number) =>
   writeCardLog state, 'Discard'
 
 export discardPick := (state: GameState, card: number | null) =>
-  player := turnPlayer(state)
+  player := turnPlayer state
   if state.show !== null // todo: peut être réécrit avec un filter
     ind := state.hand[player].indexOf state.show
     state.hand[player].splice(ind, 1)
@@ -242,13 +238,11 @@ afterKoikoi := (state: GameState) =>
     state.phase = 'RoundOver'
     state.wait_action = true
     state.winner = player
-    // self.__write_log()
   else if state.turn_16 == 16
     state.phase = 'RoundOver'
     state.wait_action = true
     state.exhausted = true
     state.winner = state.dealer
-    //self.__write_log()
   else
     state.turn_16 += 1
     state.phase = 'Discard'

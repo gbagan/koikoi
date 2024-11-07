@@ -1,0 +1,29 @@
+import { Component, createSignal } from "solid-js"
+import { Adversary } from "../model.civet"
+
+type NewGameComponent = Component<{
+  adversary: Adversary
+  closeDialog: =>
+  newGame: (adversary: Adversary) =>
+}>
+
+adversaries := [["level1", "Débutant"], ["level2", "Moyen"], ["level3", "Difficile"]]
+
+NewGame: NewGameComponent := (props) =>
+  [adversary, setAdversary] := createSignal props.adversary
+
+  <div .dialog-title>Nouvelle partie
+  <div class="dialog-body grid grid-cols-20/80 gap-8">
+    <div .text-bold.text-lg>Adversaire
+    <div .flex.gap-4>
+      {adversaries.map([name, fullname] =>
+        <button .togglebtn
+          classList={toggledbtn: name === adversary()}
+          onClick=[setAdversary, name]
+        > {fullname}
+      )}
+  <div .dialog-buttons>
+    <button .btn onClick=props.closeDialog>Annuler
+    <button .btn onClick=[props.newGame, adversary()]>OK
+
+export default NewGame

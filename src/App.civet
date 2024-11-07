@@ -2,13 +2,16 @@ import { invoke } from "@tauri-apps/api/core"
 import { Component, createMemo, createSignal, Show } from 'solid-js'
 import { createStore, produce } from "solid-js/store"
 import { LIGHT, SEED, RIBBON, DROSS, SAKE,
-        CardInfo, cardInter, field, sameMonth, initGameState, yaku, yakuPoints, koikoiNum,
+        Adversary, CardInfo, cardInter, field, sameMonth, initGameState, yaku, yakuPoints, koikoiNum,
         pairingCards, YAKU_TEXT, YAKU_CARDS,
         turnPlayer } from './model.civet'
 import { clearState, selectOyaCard, discard, discardPick, drawPick, claimKoikoi, nextAction, fakeDealCards, newRound as _newRound } from './actions.civet'
 import { delay } from './util.civet'
-import { AI, randomAI } from './ai.civet'
+import { AI, randomAI, hardAI } from './ai.civet'
 import Board from './components/Board.civet'
+import NewGame from './components/NewGame.civet'
+import Credits from './components/Credits.civet'
+import Rules from './components/Rules.civet'
 import Info from './components/Info.civet'
 import RoundOver from './components/RoundOver.civet'
 
@@ -41,11 +44,6 @@ App: Component := =>
       ribbon: cardInter state.pile[1], RIBBON
       dross: cardInter(state.pile[1], DROSS).filter  & !== SAKE
     [p1, p2]
-
-  test4 := async =>
-    setState produce (state) =>
-      clearState state
-    continueGame()
 
   test := =>
     setState produce (state) =>
@@ -123,18 +121,49 @@ App: Component := =>
         setState produce (state) =>
           nextAction state
       else if turnPlayer(state) === 1
-        aiPlays randomAI
+        ai := switch state.adversary
+          "level1" randomAI
+          "level2" hardAI
+          else hardAI
+        aiPlays ai
       else
         setState "animation", false
         break
     return
 
+  closeDialog := =>
+    dialog.close()
+    setState "dialog", null
+
+  openNewGameDialog := =>
+    if state.animation
+      return
+    setState "dialog", "newgame"
+    dialog.showModal()
+
+  openRulesDialog := () =>
+    setState "dialog", "rules"
+    dialog.showModal()
+
+  openCreditsDialog := =>
+    setState "dialog", "credits"
+    dialog.showModal()
+
+  newGame := (adversary: Adversary) =>
+    setState(produce((state) =>
+      state.adversary = adversary
+      clearState state
+    ))
+    dialog.close()
+    continueGame()
+
   <div class="relative w-screen min-h-screen bg-main bg-cover bg-no-repeat select-none flex flew-row items-center justify-around portrait:flex-col">
     <div class="flex flex-col bg-board b-cover p-6 border-2 border-black rounded-xl gap-4">
       <div class="text-4xl text-white">Koï-Koï
       <button .btn onClick=test>Test AI
-      <button .btn onClick=test4>Nouvelle Partie
-      <button .btn>Crédits
+      <button .btn onClick=openNewGameDialog>Nouvelle Partie
+      <button .btn onClick=openRulesDialog>Règles du jeu
+      <button .btn onClick=openCreditsDialog>Crédits
     {if state.phase === 'RoundOver' then
       <RoundOver
         yakus=yaku(state, turnPlayer(state))
@@ -202,5 +231,19 @@ App: Component := =>
             >Koï-Koï {state.acceptsKoikoi ? "accepté" : "refusé"}
 
   <dialog .dialog ref=dialog>
+    {switch state.dialog
+      when "newgame"
+        <NewGame
+          adversary=state.adversary
+          closeDialog=closeDialog
+          newGame=newGame
+        />
+      when "rules"
+        <Rules closeDialog=closeDialog />
+      when "credits"
+        <Credits closeDialog=closeDialog />
+      else
+        null
+    }
 
 export default App

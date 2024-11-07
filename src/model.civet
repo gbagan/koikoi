@@ -4,6 +4,8 @@ export type Phase = "Init" | "Oya" | "Oya2" | "Oya3" | "DealCards"
                   | "Discard" | "DiscardPick" | "Draw" | "DrawPick" | "Yakus" | "KoiKoi" 
                   | "ShowKoiKoi" | "RoundOver" | "NewRound"
 
+export type Adversary = "level1" | "level2" | "level3"
+
 type CardLog = {arr: number[]}[][]
 
 type CardType = 'hand1' | 'hand2' | 'field' | 'draw' | 'pile1' | 'pile2' | 'oya'
@@ -49,6 +51,9 @@ export type GameState =
   
   wait_action: boolean
   card_log: CardLog
+
+  adversary: Adversary
+  dialog: "newgame" | "rules" | "credits" | null
 
 export CRANE := 0
 export CURTAIN := 8
@@ -124,6 +129,8 @@ export function initGameState(): GameState
     wait_action: false
     animation: false
     card_log: []
+    dialog: null
+    adversary: 'level1'
   state
 
 export function field(state: GameState): number[]

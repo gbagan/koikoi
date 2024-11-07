@@ -2,4 +2,4 @@ export Green := (props: {children: string}) => <span class="text-green-500 font-
 export Red := (props: {children: string}) => <span class="text-red-500 font-bold">{props.children}
 export Blue := (props: {children: string}) => <span class="text-blue-500 font-bold">{props.children}
 
-export Emph=Green
+export Emph=Blue
